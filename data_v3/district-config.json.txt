@@ -1,0 +1,5 @@
+{
+  "table_name": "District",
+  "operation": "insert",
+  "bucket_name": "imported-data-development.zohostratus.in"
+}

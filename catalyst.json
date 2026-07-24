@@ -1,0 +1,22 @@
+{
+  "projectId": "54589000000013049",
+  "appsail": [
+    {
+      "source": ".",
+      "name": "ksp-backend",
+      "env_variables": {
+        "QUICKML_RISK_URL": "https://zoho.in",
+        "QUICKML_ANOMALY_URL": "https://zoho.in",
+        "QUICKML_LLM_URL": "https://zoho.in",
+        "KSP_REQUEST_TIMEOUT": "30",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "memory": 512,
+      "health_check_path": "/health"
+    }
+  ],
+  "client": {
+    "source": "frontend",
+    "homepage": "index.html"
+  }
+}

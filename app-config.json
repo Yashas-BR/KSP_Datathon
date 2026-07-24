@@ -1,0 +1,18 @@
+{
+  "command": "python app.py",
+  "build_path": ".",
+  "stack": "python_3_9",
+  "env_variables": {
+    "QUICKML_RISK_URL": "https://zoho.in",
+    "QUICKML_ANOMALY_URL": "https://zoho.in",
+    "QUICKML_LLM_URL": "https://zoho.in",
+    "KSP_REQUEST_TIMEOUT": "30",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "memory": 512,
+  "health_check": {
+    "path": "/health",
+    "interval": 30,
+    "timeout": 10
+  }
+}

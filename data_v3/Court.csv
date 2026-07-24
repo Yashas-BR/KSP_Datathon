@@ -1,0 +1,360 @@
+CourtID,CourtName,DistrictID,StateID,Active
+1,"District & Sessions Court, Vijayapura (HQ), Vijayapura",30,1,1
+2,"Family Court, Vijayapura (HQ), Vijayapura",30,1,1
+3,"Labour Court, Vijayapura (HQ), Vijayapura",30,1,1
+4,"Senior Civil Judge Court, Vijayapura (HQ), Vijayapura",30,1,1
+5,"Principal Civil Judge Court, Vijayapura (HQ), Vijayapura",30,1,1
+6,"Addl. Civil Judge & JMFC Court, Vijayapura (HQ), Vijayapura",30,1,1
+7,"Civil Judge (Sr.Dn) Court, Indi, Vijayapura",30,1,1
+8,"Civil Judge (Jr.Dn) & JMFC Court, Indi, Vijayapura",30,1,1
+9,"Addl. Civil Judge Court, Indi, Vijayapura",30,1,1
+10,"Civil Judge (Sr.Dn) Court, Sindagi, Vijayapura",30,1,1
+11,"Civil Judge (Jr.Dn) & JMFC Court, Sindagi, Vijayapura",30,1,1
+12,"Civil Judge (Sr.Dn) Court, Basavana Bagewadi, Vijayapura",30,1,1
+13,"Civil Judge (Jr.Dn) & JMFC Court, Basavana Bagewadi, Vijayapura",30,1,1
+14,"District & Sessions Court, Madikeri (HQ), Kodagu",18,1,1
+15,"Civil Judge & JMFC Court, Somwarpet, Kodagu",18,1,1
+16,"Senior Civil Judge & JMFC Court, Virajpet, Kodagu",18,1,1
+17,"Civil Judge & JMFC Court, Virajpet, Kodagu",18,1,1
+18,"Civil Judge & JMFC Court, Ponnampet (Virajpet taluk), Kodagu",18,1,1
+19,"District & Sessions Court, Bidar (HQ), Bidar",6,1,1
+20,"Senior Civil Judge & CJM Court, Bidar (HQ), Bidar",6,1,1
+21,"Civil Judge & JMFC Court, Bidar (HQ), Bidar",6,1,1
+22,"District & Sessions Court, Udupi (HQ), Udupi",27,1,1
+23,"Family Court, Udupi (HQ), Udupi",27,1,1
+24,"Senior Civil Judge & CJM Court, Udupi (HQ), Udupi",27,1,1
+25,"Civil Judge & JMFC Court, Udupi (HQ), Udupi",27,1,1
+26,"District & Sessions Court, Ramanagara (HQ), Ramanagara",24,1,1
+27,"Senior Civil Judge & CJM Court, Ramanagara (HQ), Ramanagara",24,1,1
+28,"Civil Judge & JMFC Court, Ramanagara (HQ), Ramanagara",24,1,1
+29,"Civil Judge & JMFC Court, Channapatna, Ramanagara",24,1,1
+30,"Senior Civil Judge & JMFC Court, Channapatna, Ramanagara",24,1,1
+31,"Civil Judge & JMFC Court, Kanakapura, Ramanagara",24,1,1
+32,"Civil Judge & JMFC Court, Magadi, Ramanagara",24,1,1
+33,"Senior Civil Judge & JMFC Court, Magadi, Ramanagara",24,1,1
+34,"District & Sessions Court, Anekal, Bengaluru Rural",4,1,1
+35,"Senior Civil Judge Court, Anekal, Bengaluru Rural",4,1,1
+36,"District & Sessions Court, Devanahalli, Bengaluru Rural",4,1,1
+37,"Senior Civil Judge Court, Devanahalli, Bengaluru Rural",4,1,1
+38,"District & Sessions Court, Doddaballapura, Bengaluru Rural",4,1,1
+39,"Civil Judge & JMFC Court, Nelamangala, Bengaluru Rural",4,1,1
+40,"Civil Judge & JMFC Court, Krishnarajapuram, Bengaluru Rural",4,1,1
+41,"District & Sessions Court, Tumakuru (HQ), Tumakuru",26,1,1
+42,"Family Court, Tumakuru (HQ), Tumakuru",26,1,1
+43,"Senior Civil Judge & CJM Court, Tumakuru (HQ), Tumakuru",26,1,1
+44,"Civil Judge & JMFC Court, Tumakuru (HQ), Tumakuru",26,1,1
+45,"Civil Judge & JMFC Court, Gubbi, Tumakuru",26,1,1
+46,"Civil Judge & JMFC Court, Koratagere, Tumakuru",26,1,1
+47,"Civil Judge & JMFC Court, Sira, Tumakuru",26,1,1
+48,"Civil Judge & JMFC Court, Turuvekere, Tumakuru",26,1,1
+49,"Senior Civil Judge & JMFC Court, Chikkanayakanahalli, Tumakuru",26,1,1
+50,"Civil Judge & JMFC Court, Chikkanayakanahalli, Tumakuru",26,1,1
+51,"Civil Judge & JMFC Court, Pavagada, Tumakuru",26,1,1
+52,"Senior Civil Judge & JMFC Court, Madhugiri, Tumakuru",26,1,1
+53,"Civil Judge & JMFC Court, Madhugiri, Tumakuru",26,1,1
+54,"Senior Civil Judge & JMFC Court, Tiptur, Tumakuru",26,1,1
+55,"Civil Judge & JMFC Court, Tiptur, Tumakuru",26,1,1
+56,"Civil Judge & JMFC Court, Kunigal, Tumakuru",26,1,1
+57,"District & Sessions Court, Bagalkote (HQ), Bagalkote",1,1,1
+58,"Civil Judge & JMFC Court, Bagalkote (HQ), Bagalkote",1,1,1
+59,"Civil Judge & JMFC Court, Badami, Bagalkote",1,1,1
+60,"Civil Judge & JMFC Court, Hungund, Bagalkote",1,1,1
+61,"District & Sessions Court, Jamkhandi, Bagalkote",1,1,1
+62,"Senior Civil Judge & JMFC Court, Jamkhandi, Bagalkote",1,1,1
+63,"Civil Judge & JMFC Court, Jamkhandi, Bagalkote",1,1,1
+64,"Senior Civil Judge & JMFC Court, Mudhol, Bagalkote",1,1,1
+65,"Civil Judge & JMFC Court, Mudhol, Bagalkote",1,1,1
+66,"District & Sessions Court, Chikkaballapura (HQ), Chikkaballapura",8,1,1
+67,"Senior Civil Judge & JMFC Court, Chikkaballapura (HQ), Chikkaballapura",8,1,1
+68,"Civil Judge & JMFC Court, Chikkaballapura (HQ), Chikkaballapura",8,1,1
+69,"Family Court, Chikkaballapura (HQ), Chikkaballapura",8,1,1
+70,"District & Sessions Court, Belagavi (HQ), Belagavi",3,1,1
+71,"Family Court, Belagavi (HQ), Belagavi",3,1,1
+72,"Senior Civil Judge & CJM Court, Belagavi (HQ), Belagavi",3,1,1
+73,"Civil Judge & JMFC Court, Belagavi (HQ), Belagavi",3,1,1
+74,"Senior Civil Judge Court, Athani, Belagavi",3,1,1
+75,"Civil Judge & JMFC Court, Athani, Belagavi",3,1,1
+76,"Civil Judge & JMFC Court, Bailhongal, Belagavi",3,1,1
+77,"Civil Judge & JMFC Court, Chikodi, Belagavi",3,1,1
+78,"Civil Judge & JMFC Court, Gokak, Belagavi",3,1,1
+79,"Civil Judge & JMFC Court, Hukkeri, Belagavi",3,1,1
+80,"Civil Judge & JMFC Court, Khanapur, Belagavi",3,1,1
+81,"Civil Judge & JMFC Court, Kittur, Belagavi",3,1,1
+82,"Civil Judge & JMFC Court, Kagwad, Belagavi",3,1,1
+83,"Civil Judge & JMFC Court, Mudalagi, Belagavi",3,1,1
+84,"Civil Judge & JMFC Court, Nippani, Belagavi",3,1,1
+85,"Civil Judge & JMFC Court, Raibag, Belagavi",3,1,1
+86,"Civil Judge & JMFC Court, Ramdurg, Belagavi",3,1,1
+87,"Civil Judge & JMFC Court, Sankeshwar, Belagavi",3,1,1
+88,"Civil Judge & JMFC Court, Saundatti, Belagavi",3,1,1
+89,"Civil Judge & JMFC Court, Dharwad (HQ), Dharwad",13,1,1
+90,"District & Sessions Court, Hubballi, Dharwad",13,1,1
+91,"Family Court, Hubballi, Dharwad",13,1,1
+92,"Labour Court, Hubballi, Dharwad",13,1,1
+93,"Industrial Tribunal, Hubballi, Dharwad",13,1,1
+94,"Senior Civil Judge & JMFC Court, Hubballi, Dharwad",13,1,1
+95,"Civil Judge & JMFC Court, Hubballi, Dharwad",13,1,1
+96,"Senior Civil Judge & JMFC Court, Kundgol, Dharwad",13,1,1
+97,"Civil Judge & JMFC Court, Kundgol, Dharwad",13,1,1
+98,"Senior Civil Judge & JMFC Court, Navalgund, Dharwad",13,1,1
+99,"Civil Judge & JMFC Court, Navalgund, Dharwad",13,1,1
+100,"Senior Civil Judge & JMFC Court, Kalghatgi, Dharwad",13,1,1
+101,"District & Sessions Court, Mysuru (HQ), Mysuru",22,1,1
+102,"Family Court, Mysuru (HQ), Mysuru",22,1,1
+103,"Senior Civil Judge & CJM Court, Mysuru (HQ), Mysuru",22,1,1
+104,"Civil Judge & JMFC Court, Mysuru (HQ), Mysuru",22,1,1
+105,"Motor Accident Claims Tribunal, Mysuru (HQ), Mysuru",22,1,1
+106,"Senior Civil Judge & JMFC Court, Hunsur, Mysuru",22,1,1
+107,"Civil Judge & JMFC Court, Hunsur, Mysuru",22,1,1
+108,"Senior Civil Judge & JMFC Court, H.D. Kote, Mysuru",22,1,1
+109,"Civil Judge & JMFC Court, H.D. Kote, Mysuru",22,1,1
+110,"Senior Civil Judge & JMFC Court, Nanjangud, Mysuru",22,1,1
+111,"Civil Judge & JMFC Court, Nanjangud, Mysuru",22,1,1
+112,"Senior Civil Judge & JMFC Court, K.R. Nagar, Mysuru",22,1,1
+113,"Civil Judge & JMFC Court, K.R. Nagar, Mysuru",22,1,1
+114,"Senior Civil Judge & JMFC Court, Periyapatna, Mysuru",22,1,1
+115,"Civil Judge & JMFC Court, Periyapatna, Mysuru",22,1,1
+116,"Senior Civil Judge Court, T. Narasipura, Mysuru",22,1,1
+117,"Civil Judge & JMFC Court, T. Narasipura, Mysuru",22,1,1
+118,"District & Sessions Court, Ballari (HQ), Ballari",2,1,1
+119,"Senior Civil Judge & CJM Court, Ballari (HQ), Ballari",2,1,1
+120,"Civil Judge & JMFC Court, Ballari (HQ), Ballari",2,1,1
+121,"Senior Civil Judge & JMFC Court, Hosapete, Ballari",2,1,1
+122,"Civil Judge & JMFC Court, Hosapete, Ballari",2,1,1
+123,"Senior Civil Judge & JMFC Court, Kudligi, Ballari",2,1,1
+124,"Senior Civil Judge Court, Hagaribommanahalli (H.B. Halli), Ballari",2,1,1
+125,"Civil Judge & JMFC Court, Hagaribommanahalli (H.B. Halli), Ballari",2,1,1
+126,"District & Sessions Court, Kalaburagi (HQ), Kalaburagi",17,1,1
+127,"Family Court, Kalaburagi (HQ), Kalaburagi",17,1,1
+128,"Labour Court, Kalaburagi (HQ), Kalaburagi",17,1,1
+129,"Senior Civil Judge & CJM Court, Kalaburagi (HQ), Kalaburagi",17,1,1
+130,"Civil Judge & JMFC Court, Kalaburagi (HQ), Kalaburagi",17,1,1
+131,"Railway Court, Kalaburagi (HQ), Kalaburagi",17,1,1
+132,"Civil Judge (Sr.Dn) Court, Sedam, Kalaburagi",17,1,1
+133,"Civil Judge & JMFC Court, Sedam, Kalaburagi",17,1,1
+134,"Civil Judge (Sr.Dn) Court, Aland, Kalaburagi",17,1,1
+135,"Civil Judge & JMFC Court, Aland, Kalaburagi",17,1,1
+136,"Senior Civil Judge & JMFC Court, Chincholi, Kalaburagi",17,1,1
+137,"Civil Judge & JMFC Court, Chincholi, Kalaburagi",17,1,1
+138,"Civil Judge (Sr.Dn) & JMFC Court, Chittapur, Kalaburagi",17,1,1
+139,"Civil Judge & JMFC Court, Chittapur, Kalaburagi",17,1,1
+140,"Senior Civil Judge & JMFC Court, Jewargi, Kalaburagi",17,1,1
+141,"Civil Judge & JMFC Court, Jewargi, Kalaburagi",17,1,1
+142,"Senior Civil Judge & JMFC Court, Afzalpur, Kalaburagi",17,1,1
+143,"Civil Judge & JMFC Court, Afzalpur, Kalaburagi",17,1,1
+144,"District & Sessions Court, Raichur (HQ), Raichur",23,1,1
+145,"Family Court, Raichur (HQ), Raichur",23,1,1
+146,"Senior Civil Judge & CJM Court, Raichur (HQ), Raichur",23,1,1
+147,"Civil Judge & JMFC Court, Raichur (HQ), Raichur",23,1,1
+148,"District & Sessions Court, Sindhanur, Raichur",23,1,1
+149,"Senior Civil Judge & JMFC Court, Sindhanur, Raichur",23,1,1
+150,"Civil Judge & JMFC Court, Sindhanur, Raichur",23,1,1
+151,"Senior Civil Judge & JMFC Court, Manvi, Raichur",23,1,1
+152,"Civil Judge & JMFC Court, Manvi, Raichur",23,1,1
+153,"Senior Civil Judge & JMFC Court, Devadurga, Raichur",23,1,1
+154,"Civil Judge & JMFC Court, Devadurga, Raichur",23,1,1
+155,"Senior Civil Judge Court, Lingasugur, Raichur",23,1,1
+156,"Civil Judge & JMFC Court, Lingasugur, Raichur",23,1,1
+157,"District & Sessions Court, Chitradurga (HQ), Chitradurga",10,1,1
+158,"Senior Civil Judge & CJM Court, Chitradurga (HQ), Chitradurga",10,1,1
+159,"Civil Judge & JMFC Court, Chitradurga (HQ), Chitradurga",10,1,1
+160,"Senior Civil Judge & JMFC Court, Hiriyur, Chitradurga",10,1,1
+161,"Civil Judge & JMFC Court, Hiriyur, Chitradurga",10,1,1
+162,"Senior Civil Judge & JMFC Court, Challakere, Chitradurga",10,1,1
+163,"Civil Judge & JMFC Court, Challakere, Chitradurga",10,1,1
+164,"Senior Civil Judge & JMFC Court, Holalkere, Chitradurga",10,1,1
+165,"Civil Judge & JMFC Court, Holalkere, Chitradurga",10,1,1
+166,"Senior Civil Judge & JMFC Court, Hosadurga, Chitradurga",10,1,1
+167,"Civil Judge & JMFC Court, Hosadurga, Chitradurga",10,1,1
+168,"Civil Judge & JMFC Court, Molakalmuru, Chitradurga",10,1,1
+169,"District & Sessions Court, Hassan (HQ), Hassan",15,1,1
+170,"Family Court, Hassan (HQ), Hassan",15,1,1
+171,"Senior Civil Judge & CJM Court, Hassan (HQ), Hassan",15,1,1
+172,"Civil Judge & JMFC Court, Hassan (HQ), Hassan",15,1,1
+173,"District & Sessions Court, Channarayapatna, Hassan",15,1,1
+174,"Senior Civil Judge & JMFC Court, Channarayapatna, Hassan",15,1,1
+175,"Civil Judge & JMFC Court, Channarayapatna, Hassan",15,1,1
+176,"Senior Civil Judge & JMFC Court, Arsikere, Hassan",15,1,1
+177,"Civil Judge & JMFC Court, Arsikere, Hassan",15,1,1
+178,"Senior Civil Judge & JMFC Court, Arkalgud, Hassan",15,1,1
+179,"Senior Civil Judge & JMFC Court, Belur, Hassan",15,1,1
+180,"Civil Judge & JMFC Court, Belur, Hassan",15,1,1
+181,"Senior Civil Judge & JMFC Court, Holenarasipura, Hassan",15,1,1
+182,"Civil Judge & JMFC Court, Holenarasipura, Hassan",15,1,1
+183,"Senior Civil Judge & JMFC Court, Sakleshpur, Hassan",15,1,1
+184,"Civil Judge & JMFC Court, Sakleshpur, Hassan",15,1,1
+185,"District & Sessions Court, Mandya (HQ), Mandya",21,1,1
+186,"Senior Civil Judge & CJM Court, Mandya (HQ), Mandya",21,1,1
+187,"Civil Judge & JMFC Court, Mandya (HQ), Mandya",21,1,1
+188,"District & Sessions Court, Srirangapatna, Mandya",21,1,1
+189,"Civil Judge & JMFC Court, Srirangapatna, Mandya",21,1,1
+190,"Senior Civil Judge & JMFC Court, Pandavapura, Mandya",21,1,1
+191,"Senior Civil Judge & JMFC Court, Krishnarajapete (K.R. Pet), Mandya",21,1,1
+192,"Civil Judge & JMFC Court, Krishnarajapete (K.R. Pet), Mandya",21,1,1
+193,"Senior Civil Judge & JMFC Court, Nagamangala, Mandya",21,1,1
+194,"Civil Judge & JMFC Court, Nagamangala, Mandya",21,1,1
+195,"Senior Civil Judge Court, Maddur, Mandya",21,1,1
+196,"Civil Judge & JMFC Court, Maddur, Mandya",21,1,1
+197,"Senior Civil Judge & JMFC Court, Malavalli, Mandya",21,1,1
+198,"Civil Judge & JMFC Court, Malavalli, Mandya",21,1,1
+199,"District & Sessions Court, Mangaluru (HQ), Dakshina Kannada",11,1,1
+200,"Family Court, Mangaluru (HQ), Dakshina Kannada",11,1,1
+201,"Fast Track Court, Mangaluru (HQ), Dakshina Kannada",11,1,1
+202,"Senior Civil Judge & JMFC Court, Mangaluru (HQ), Dakshina Kannada",11,1,1
+203,"Civil Judge & JMFC Court, Mangaluru (HQ), Dakshina Kannada",11,1,1
+204,"Senior Civil Judge & ACJM Court, Puttur, Dakshina Kannada",11,1,1
+205,"Civil Judge & JMFC Court, Puttur, Dakshina Kannada",11,1,1
+206,"Fast Track Court, Puttur, Dakshina Kannada",11,1,1
+207,"Senior Civil Judge & JMFC Court, Bantwal, Dakshina Kannada",11,1,1
+208,"Civil Judge & JMFC Court, Bantwal, Dakshina Kannada",11,1,1
+209,"Senior Civil Judge & JMFC Court, Belthangady, Dakshina Kannada",11,1,1
+210,"Civil Judge & JMFC Court, Belthangady, Dakshina Kannada",11,1,1
+211,"Senior Civil Judge & JMFC Court, Sullia, Dakshina Kannada",11,1,1
+212,"Civil Judge & JMFC Court, Sullia, Dakshina Kannada",11,1,1
+213,"Civil Judge & JMFC Court, Moodabidri, Dakshina Kannada",11,1,1
+214,"District & Sessions Court, Shivamogga (HQ), Shivamogga",25,1,1
+215,"Family Court, Shivamogga (HQ), Shivamogga",25,1,1
+216,"Senior Civil Judge & CJM Court, Shivamogga (HQ), Shivamogga",25,1,1
+217,"Civil Judge & JMFC Court, Shivamogga (HQ), Shivamogga",25,1,1
+218,"District & Sessions Court, Bhadravathi, Shivamogga",25,1,1
+219,"Senior Civil Judge & JMFC Court, Bhadravathi, Shivamogga",25,1,1
+220,"Civil Judge & JMFC Court, Bhadravathi, Shivamogga",25,1,1
+221,"District & Sessions Court, Sagar, Shivamogga",25,1,1
+222,"Senior Civil Judge & JMFC Court, Sagar, Shivamogga",25,1,1
+223,"Civil Judge & JMFC Court, Sagar, Shivamogga",25,1,1
+224,"Senior Civil Judge & JMFC Court, Shikaripura, Shivamogga",25,1,1
+225,"Civil Judge & JMFC Court, Shikaripura, Shivamogga",25,1,1
+226,"Senior Civil Judge & JMFC Court, Sorab, Shivamogga",25,1,1
+227,"Civil Judge & JMFC Court, Sorab, Shivamogga",25,1,1
+228,"Senior Civil Judge & JMFC Court, Thirthahalli, Shivamogga",25,1,1
+229,"Civil Judge & JMFC Court, Thirthahalli, Shivamogga",25,1,1
+230,"Senior Civil Judge & JMFC Court, Hosanagara, Shivamogga",25,1,1
+231,"Civil Judge & JMFC Court, Hosanagara, Shivamogga",25,1,1
+232,"District & Sessions Court, Chamarajanagar (HQ), Chamarajanagar",7,1,1
+233,"Senior Civil Judge & CJM Court, Chamarajanagar (HQ), Chamarajanagar",7,1,1
+234,"Civil Judge & JMFC Court, Chamarajanagar (HQ), Chamarajanagar",7,1,1
+235,"District & Sessions Court, Kollegal, Chamarajanagar",7,1,1
+236,"Senior Civil Judge & JMFC Court, Kollegal, Chamarajanagar",7,1,1
+237,"Civil Judge & JMFC Court, Kollegal, Chamarajanagar",7,1,1
+238,"Senior Civil Judge & JMFC Court, Gundlupet, Chamarajanagar",7,1,1
+239,"Civil Judge & JMFC Court, Gundlupet, Chamarajanagar",7,1,1
+240,"Civil Judge & JMFC Court, Yelandur, Chamarajanagar",7,1,1
+241,"District & Sessions Court, Davanagere (HQ), Davanagere",12,1,1
+242,"Family Court, Davanagere (HQ), Davanagere",12,1,1
+243,"Senior Civil Judge & CJM Court, Davanagere (HQ), Davanagere",12,1,1
+244,"Civil Judge & JMFC Court, Davanagere (HQ), Davanagere",12,1,1
+245,"Civil Judge & JMFC Court, Harihar, Davanagere",12,1,1
+246,"Civil Judge & JMFC Court, Channagiri, Davanagere",12,1,1
+247,"Civil Judge & JMFC Court, Honnali, Davanagere",12,1,1
+248,"Civil Judge & JMFC Court, Jagalur, Davanagere",12,1,1
+249,"District & Sessions Court, Gadag (HQ), Gadag",14,1,1
+250,"Senior Civil Judge & CJM Court, Gadag (HQ), Gadag",14,1,1
+251,"Civil Judge & JMFC Court, Gadag (HQ), Gadag",14,1,1
+252,"Senior Civil Judge & JMFC Court, Ron, Gadag",14,1,1
+253,"Civil Judge & JMFC Court, Ron, Gadag",14,1,1
+254,"Civil Judge & JMFC Court, Nargund, Gadag",14,1,1
+255,"Senior Civil Judge Court, Shirahatti (Laxmeshwar), Gadag",14,1,1
+256,"Civil Judge & JMFC Court, Shirahatti (Laxmeshwar), Gadag",14,1,1
+257,"Senior Civil Judge Court, Mundargi, Gadag",14,1,1
+258,"Civil Judge & JMFC Court, Mundargi, Gadag",14,1,1
+259,"District & Sessions Court, Haveri (HQ), Haveri",16,1,1
+260,"Senior Civil Judge & CJM Court, Haveri (HQ), Haveri",16,1,1
+261,"Civil Judge & JMFC Court, Haveri (HQ), Haveri",16,1,1
+262,"District & Sessions Court, Ranebennur, Haveri",16,1,1
+263,"Senior Civil Judge & JMFC Court, Ranebennur, Haveri",16,1,1
+264,"Civil Judge & JMFC Court, Ranebennur, Haveri",16,1,1
+265,"Senior Civil Judge Court, Hangal, Haveri",16,1,1
+266,"Civil Judge & JMFC Court, Hangal, Haveri",16,1,1
+267,"Senior Civil Judge Court, Hirekerur, Haveri",16,1,1
+268,"Civil Judge & JMFC Court, Hirekerur, Haveri",16,1,1
+269,"Senior Civil Judge Court, Byadgi, Haveri",16,1,1
+270,"Civil Judge & JMFC Court, Byadgi, Haveri",16,1,1
+271,"Senior Civil Judge Court, Shiggaon, Haveri",16,1,1
+272,"Civil Judge & JMFC Court, Shiggaon, Haveri",16,1,1
+273,"Civil Judge & JMFC Court, Savanur, Haveri",16,1,1
+274,"District & Sessions Court, Kolar (HQ), Kolar",19,1,1
+275,"Family Court, Kolar (HQ), Kolar",19,1,1
+276,"Senior Civil Judge & CJM Court, Kolar (HQ), Kolar",19,1,1
+277,"Civil Judge & JMFC Court, Kolar (HQ), Kolar",19,1,1
+278,"District & Sessions Court, KGF, Kolar",19,1,1
+279,"Senior Civil Judge & JMFC Court, KGF, Kolar",19,1,1
+280,"Civil Judge & JMFC Court, KGF, Kolar",19,1,1
+281,"Senior Civil Judge & JMFC Court, Malur, Kolar",19,1,1
+282,"Civil Judge & JMFC Court, Malur, Kolar",19,1,1
+283,"Civil Judge & JMFC Court, Mulbagal, Kolar",19,1,1
+284,"Civil Judge & JMFC Court, Srinivaspur, Kolar",19,1,1
+285,"Civil Judge & JMFC Court, Bangarpet, Kolar",19,1,1
+286,"District & Sessions Court, Karwar (HQ), Uttara Kannada",28,1,1
+287,"Senior Civil Judge & CJM Court, Karwar (HQ), Uttara Kannada",28,1,1
+288,"Civil Judge & JMFC Court, Karwar (HQ), Uttara Kannada",28,1,1
+289,"Senior Civil Judge & JMFC Court, Sirsi, Uttara Kannada",28,1,1
+290,"Civil Judge & JMFC Court, Sirsi, Uttara Kannada",28,1,1
+291,"Senior Civil Judge & JMFC Court, Kumta, Uttara Kannada",28,1,1
+292,"Civil Judge & JMFC Court, Kumta, Uttara Kannada",28,1,1
+293,"Civil Judge & JMFC Court, Bhatkal, Uttara Kannada",28,1,1
+294,"Senior Civil Judge & JMFC Court, Yellapur, Uttara Kannada",28,1,1
+295,"Civil Judge & JMFC Court, Honnavar, Uttara Kannada",28,1,1
+296,"Civil Judge & JMFC Court, Mundgod, Uttara Kannada",28,1,1
+297,"District & Sessions Court, Yadgir (HQ), Yadgir",31,1,1
+298,"Senior Civil Judge & CJM Court, Yadgir (HQ), Yadgir",31,1,1
+299,"Civil Judge & JMFC Court, Yadgir (HQ), Yadgir",31,1,1
+300,"Fast Track Court, Yadgir (HQ), Yadgir",31,1,1
+301,"Senior Civil Judge Court, Shorapur, Yadgir",31,1,1
+302,"Civil Judge & JMFC Court, Shorapur, Yadgir",31,1,1
+303,"Senior Civil Judge & JMFC Court, Shahapur, Yadgir",31,1,1
+304,"Civil Judge & JMFC Court, Shahapur, Yadgir",31,1,1
+305,"District & Sessions Court, Hosapete (HQ), Vijayanagara",29,1,1
+306,"Senior Civil Judge & JMFC Court, Hosapete (HQ), Vijayanagara",29,1,1
+307,"Civil Judge & JMFC Court, Hosapete (HQ), Vijayanagara",29,1,1
+308,"Senior Civil Judge & JMFC Court, Kudligi, Vijayanagara",29,1,1
+309,"Senior Civil Judge Court, Hagaribommanahalli (H.B. Halli), Vijayanagara",29,1,1
+310,"Civil Judge & JMFC Court, Hagaribommanahalli (H.B. Halli), Vijayanagara",29,1,1
+311,"Senior Civil Judge Court, Harapanahalli, Vijayanagara",29,1,1
+312,"District & Sessions Court, Chikkamagaluru (HQ), Chikkamagaluru",9,1,1
+313,"Civil Judge & JMFC Court, Chikkamagaluru (HQ), Chikkamagaluru",9,1,1
+314,"Senior Civil Judge & JMFC Court, Kadur, Chikkamagaluru",9,1,1
+315,"Civil Judge & JMFC Court, Kadur, Chikkamagaluru",9,1,1
+316,"Senior Civil Judge & JMFC Court, Mudigere, Chikkamagaluru",9,1,1
+317,"Civil Judge & JMFC Court, Mudigere, Chikkamagaluru",9,1,1
+318,"Senior Civil Judge & JMFC Court, Tarikere, Chikkamagaluru",9,1,1
+319,"Civil Judge & JMFC Court, Tarikere, Chikkamagaluru",9,1,1
+320,"Fast Track Court, Tarikere, Chikkamagaluru",9,1,1
+321,"Senior Civil Judge & JMFC Court, Narasimharajapura, Chikkamagaluru",9,1,1
+322,"Civil Judge & JMFC Court, Narasimharajapura, Chikkamagaluru",9,1,1
+323,"Civil Judge & JMFC Court, Koppa, Chikkamagaluru",9,1,1
+324,"Civil Judge & JMFC Court, Sringeri, Chikkamagaluru",9,1,1
+325,"City Civil & Sessions Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+326,"Chief Metropolitan Magistrate Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+327,"Metropolitan Magistrate Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+328,"Family Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+329,"Labour Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+330,"Industrial Tribunal, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+331,"Court of Small Causes, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+332,"Special Court for Economic Offences, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+333,"Metropolitan Magistrate Traffic Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+334,"Special JMFC (Sales Tax) Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+335,"Metropolitan Magistrate Virtual Court, Bengaluru City (HQ), Bengaluru Urban",5,1,1
+336,"District & Sessions Court, Koppal (HQ), Koppal",20,1,1
+337,"Family Court, Koppal (HQ), Koppal",20,1,1
+338,"Senior Civil Judge & CJM Court, Koppal (HQ), Koppal",20,1,1
+339,"Civil Judge & JMFC Court, Koppal (HQ), Koppal",20,1,1
+340,"Fast Track Court, Koppal (HQ), Koppal",20,1,1
+341,"District & Sessions Court, Gangavathi, Koppal",20,1,1
+342,"Civil Judge & JMFC Court, Gangavathi, Koppal",20,1,1
+343,"Civil Judge & JMFC Court, Kushtagi, Koppal",20,1,1
+344,"Civil Judge & JMFC Court, Yelburga, Koppal",20,1,1
+345,"District & Sessions Court, Basavakalyan, Bidar",6,1,1
+346,"Senior Civil Judge Court, Basavakalyan, Bidar",6,1,1
+347,"Civil Judge & JMFC Court, Basavakalyan, Bidar",6,1,1
+348,"Senior Civil Judge & JMFC Court, Bhalki, Bidar",6,1,1
+349,"Civil Judge & JMFC Court, Bhalki, Bidar",6,1,1
+350,"Senior Civil Judge & JMFC Court, Humnabad, Bidar",6,1,1
+351,"Civil Judge & JMFC Court, Humnabad, Bidar",6,1,1
+352,"Senior Civil Judge & JMFC Court, Aurad, Bidar",6,1,1
+353,"Civil Judge & JMFC Court, Aurad, Bidar",6,1,1
+354,"District & Sessions Court, Kundapura, Udupi",27,1,1
+355,"Senior Civil Judge Court, Kundapura, Udupi",27,1,1
+356,"Civil Judge & JMFC Court, Kundapura, Udupi",27,1,1
+357,"Senior Civil Judge & ACJM Court, Karkala, Udupi",27,1,1
+358,"Civil Judge & JMFC Court, Karkala, Udupi",27,1,1
+359,"Civil Judge & JMFC Court, Byndoor (Bainduru), Udupi",27,1,1

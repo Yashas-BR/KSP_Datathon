@@ -1,0 +1,17 @@
+CrimeSubHeadID,CrimeHeadID,CrimeHeadName,SeqID
+1,1,Murder,1
+2,1,Attempt to Murder,2
+3,1,Grievous Hurt,3
+4,1,Kidnapping,4
+5,2,Theft,5
+6,2,Chain Snatching,6
+7,2,Burglary,7
+8,2,Robbery,8
+9,3,Assault on Women,9
+10,3,Dowry Harassment,10
+11,3,Sexual Harassment,11
+12,4,Online Fraud,12
+13,4,Digital Arrest Scam,13
+14,4,Identity Theft,14
+15,5,Rioting,15
+16,5,Unlawful Assembly,16
