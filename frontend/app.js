@@ -1753,6 +1753,7 @@ bootstrap().catch((error) => {
     stationLayerGroup: null,
     data: null,            // full API payload
     selectedDistrict: null, // district object currently drilled-into
+    districtMarkers: [],   // case markers fetched for the drilled district
     days: 365,
   };
 
@@ -1893,8 +1894,8 @@ bootstrap().catch((error) => {
           <div style="font-size:0.82rem;font-weight:600;color:#7c3aed;margin-bottom:8px;">${formatNumber(station.caseCount)} Cases</div>
           ${topCrimes ? `<ul style="margin:0;padding-left:14px;">${topCrimes}</ul>` : ''}
           <button type="button" class="btn-browse-cases" style="margin-top:8px;"
-            onclick="window.openCaseBrowser('${escapeHtml(station.stationName)}', ${station.stationId}, ${ddState.selectedDistrict?.districtId || 0})">
-            📋 Browse Cases
+            onclick="window._ddOpenCaseBrowser('${escapeHtml(station.stationName)}', ${station.stationId}, ${ddState.selectedDistrict?.districtId || 0})">
+            Browse Cases (${station.caseCount})
           </button>
         </div>
       `);
@@ -1996,8 +1997,9 @@ bootstrap().catch((error) => {
   }
 
   // ── Drill into a district ────────────────────────────────────────
-  function drillIntoDistrict(district) {
+  async function drillIntoDistrict(district) {
     ddState.selectedDistrict = district;
+    ddState.districtMarkers = []; // clear until fresh fetch completes
 
     // Show/hide panels
     if (ddEls.stationPanel) ddEls.stationPanel.removeAttribute('hidden');
@@ -2036,11 +2038,22 @@ bootstrap().catch((error) => {
     if (ddEls.status) {
       ddEls.status.innerHTML = `<span class="live-dot"></span> ${escapeHtml(district.districtName)} · ${formatNumber(district.caseCount)} cases · ${stations.length} stations`;
     }
+
+    // ── Fetch district-specific case markers for the Case Browser ───
+    // Done in background so it doesn't block the map render above.
+    try {
+      const distPayload = await api(`/api/dashboard?district_id=${district.districtId}&days=${ddState.days}`);
+      ddState.districtMarkers = distPayload.markers || [];
+    } catch (err) {
+      console.warn('Could not fetch district markers for case browser:', err);
+      ddState.districtMarkers = [];
+    }
   }
 
   // ── Reset to statewide view ──────────────────────────────────────
   function resetDdMap() {
     ddState.selectedDistrict = null;
+    ddState.districtMarkers = [];
     ddState.stationLayerGroup.clearLayers();
     if (ddEls.stationPanel) ddEls.stationPanel.setAttribute('hidden', '');
     if (ddEls.resetBtn) ddEls.resetBtn.style.display = 'none';
@@ -2101,6 +2114,40 @@ bootstrap().catch((error) => {
   window._ddDrillDistrict = function (districtId) {
     const district = (ddState.data?.districts || []).find(d => d.districtId === districtId);
     if (district) drillIntoDistrict(district);
+  };
+
+  // ── Case browser for drill-down stations ─────────────────────────
+  // Uses ddState.districtMarkers (fetched per district) instead of the
+  // statewide state.dashboard.markers which is capped at 500 entries.
+  window._ddOpenCaseBrowser = function (stationName, stationId, districtId) {
+    const allMarkers = ddState.districtMarkers;
+
+    // Match by stationId first (most reliable)
+    let cases = allMarkers.filter(m => stationId && Number(m.stationId) === Number(stationId));
+
+    // Fallback: match by station name substring
+    if (!cases.length && stationName) {
+      const needle = String(stationName).trim().toLowerCase();
+      cases = allMarkers.filter(m => {
+        const hay = String(m.stationName || '').trim().toLowerCase();
+        return hay.includes(needle) || needle.includes(hay);
+      });
+    }
+
+    // If district markers not loaded yet, fall back to the existing helper
+    if (!allMarkers.length) {
+      window.openCaseBrowser(stationName, stationId, districtId);
+      return;
+    }
+
+    // Re-use existing modal infrastructure
+    state.currentBrowserStationName = stationName || 'Police Station';
+    state.currentBrowserCases = cases;
+    els.caseBrowserTitle.textContent = `${stationName} • Registered Incidents`;
+    els.caseBrowserModal.hidden = false;
+    els.modalCaseSearch.value = '';
+    // renderCaseList is a global function defined in the main module
+    renderCaseList();
   };
 
   // ── Window select change ─────────────────────────────────────────
