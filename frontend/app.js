@@ -4,6 +4,7 @@ const state = {
   trends: null,
   network: null,
   correlations: null,
+  socioPredictive: null,
   selectedDistrictId: null,
   selectedStationId: null,
   selectedHour: null,
@@ -68,6 +69,12 @@ const els = {
   modalCaseSearch: document.getElementById('modalCaseSearch'),
   caseCountBadge: document.getElementById('caseCountBadge'),
   caseListContent: document.getElementById('caseListContent'),
+  // Strategic Intelligence Hub
+  sihStatus: document.getElementById('sihStatus'),
+  sihInsights: document.getElementById('sihInsights'),
+  socioCorrelationPanel: document.getElementById('socioCorrelationPanel'),
+  predictiveRiskPanel: document.getElementById('predictiveRiskPanel'),
+  anomalyDetectionPanel: document.getElementById('anomalyDetectionPanel'),
 };
 
 const svgIcons = {
@@ -880,6 +887,255 @@ async function fetchCorrelations() {
   return api(`/api/correlations?${params.toString()}`);
 }
 
+async function fetchSocioPredictive() {
+  const params = new URLSearchParams();
+  if (state.selectedDistrictId) params.set('district_id', state.selectedDistrictId);
+  params.set('days', state.days);
+  return api(`/api/socio_predictive?${params.toString()}`);
+}
+
+// ── Strategic Intelligence Hub Renderers ───────────────────────────────────
+
+function renderStrategicInsights(insights) {
+  if (!els.sihInsights) return;
+  if (!insights || !insights.length) {
+    els.sihInsights.innerHTML = '';
+    return;
+  }
+  els.sihInsights.innerHTML = insights.map((text, i) => {
+    const icons = [
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>`,
+    ];
+    return `<div class="sih-insight-pill">${icons[i % 3]}${escapeHtml(text)}</div>`;
+  }).join('');
+}
+
+function renderSocioCorrelation(data) {
+  const container = els.socioCorrelationPanel;
+  if (!container) return;
+  const districts = (data.socioEconomicCorrelation || []).slice(0, 8);
+  if (!districts.length) {
+    container.innerHTML = '<div class="muted">No socio-economic data available for the selected window.</div>';
+    return;
+  }
+
+  const maxCases = Math.max(...districts.map(d => d.caseCount), 1);
+
+  container.innerHTML = districts.map((d) => {
+    const barWidth = Math.round((d.caseCount / maxCases) * 100);
+    const urbanClass = d.urbanizationIndex >= 60 ? 'urban-high' : (d.urbanizationIndex >= 30 ? 'urban-mid' : 'urban-low');
+    const topCrime = d.topCrimeTypes?.[0]?.crimeName || 'Unknown';
+    const topOcc = d.topOccupations?.[0]?.occupationName || 'N/A';
+    const genderEntries = Object.entries(d.genderBreakdown || {});
+    const totalGender = genderEntries.reduce((s, [, v]) => s + v, 0);
+    return `
+      <article class="socio-district-card">
+        <div class="socio-card-top">
+          <div class="socio-district-name">${escapeHtml(d.districtName)}</div>
+          <span class="urbanization-badge ${urbanClass}">UI: ${d.urbanizationIndex}</span>
+        </div>
+        <div class="socio-bar-wrap">
+          <div class="socio-bar" style="width:${barWidth}%"></div>
+          <span class="socio-bar-label">${formatNumber(d.caseCount)} cases</span>
+        </div>
+        <div class="socio-meta-row">
+          <span class="socio-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M3 21h18M3 7v14M21 7v14M12 3L2 7h20L12 3z"/></svg>
+            ${d.stationCount} PS
+          </span>
+          <span class="socio-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Avg age: ${d.avgComplainantAge !== null ? d.avgComplainantAge + 'y' : 'N/A'}
+          </span>
+          ${totalGender > 0 ? genderEntries.slice(0,2).map(([g, v]) =>
+            `<span class="socio-meta-item">Gender ${escapeHtml(String(g))}: ${Math.round(v/totalGender*100)}%</span>`
+          ).join('') : ''}
+        </div>
+        <div class="socio-tags">
+          <span class="tag-pill" style="font-size:0.72rem;padding:3px 8px;">&#x1f4cc; ${escapeHtml(topCrime)}</span>
+          <span class="tag-pill" style="font-size:0.72rem;padding:3px 8px;border-color:rgba(168,85,247,0.3);color:#c084fc;">&#x1f4bc; ${escapeHtml(topOcc)}</span>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function renderPredictiveRisk(data) {
+  const container = els.predictiveRiskPanel;
+  if (!container) return;
+  const districts = (data.predictiveRiskScores || []).slice(0, 8);
+  if (!districts.length) {
+    container.innerHTML = '<div class="muted">Insufficient historical data for predictive modeling.</div>';
+    return;
+  }
+
+  const levelColors = {
+    critical: { bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.5)', text: '#fca5a5', bar: '#ef4444' },
+    high:     { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.45)', text: '#fde68a', bar: '#f59e0b' },
+    moderate: { bg: 'rgba(6,182,212,0.1)', border: 'rgba(6,182,212,0.3)', text: '#67e8f9', bar: '#06b6d4' },
+    low:      { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)', text: '#6ee7b7', bar: '#10b981' },
+  };
+  const trendIcon = { rising: '↑', stable: '→', falling: '↓' };
+  const trendColor = { rising: '#ef4444', stable: '#94a3b8', falling: '#10b981' };
+
+  container.innerHTML = districts.map((d) => {
+    const colors = levelColors[d.riskLevel] || levelColors.low;
+    const icon = trendIcon[d.trend] || '→';
+    const iconColor = trendColor[d.trend] || '#94a3b8';
+    const forecast = d.forecastNext7Days || [];
+    const sparkMax = Math.max(...forecast, d.avgDailyCases, 1);
+    // Mini sparkline SVG
+    const sparkPoints = forecast.map((v, i) => {
+      const x = (i / Math.max(forecast.length - 1, 1)) * 80;
+      const y = 20 - (v / sparkMax) * 18;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const topCrime = d.topCrimeTypes?.[0]?.crimeName || 'Unknown';
+    return `
+      <article class="pred-risk-card" style="background:${colors.bg};border-color:${colors.border};">
+        <div class="pred-risk-top">
+          <div>
+            <div class="pred-district-name">${escapeHtml(d.districtName)}</div>
+            <div class="pred-risk-badge" style="color:${colors.text};">${(d.riskLevel || 'low').toUpperCase()} RISK</div>
+          </div>
+          <div class="pred-score-circle" style="border-color:${colors.bar};">
+            <span style="color:${colors.text};font-weight:700;font-size:1.1rem;">${d.riskScore}</span>
+            <span style="color:var(--muted);font-size:0.65rem;">/100</span>
+          </div>
+        </div>
+        <div class="pred-metrics">
+          <div class="pred-metric">
+            <span class="pred-metric-label">Avg Daily</span>
+            <span class="pred-metric-val">${d.avgDailyCases}</span>
+          </div>
+          <div class="pred-metric">
+            <span class="pred-metric-label">Peak</span>
+            <span class="pred-metric-val">${d.peakDailyCases}</span>
+          </div>
+          <div class="pred-metric">
+            <span class="pred-metric-label">7-Day Forecast Avg</span>
+            <span class="pred-metric-val">${d.forecastAvgDaily}</span>
+          </div>
+          <div class="pred-metric">
+            <span class="pred-metric-label">Trend</span>
+            <span class="pred-metric-val" style="color:${iconColor};font-weight:700;">${icon} ${escapeHtml(d.trend)}</span>
+          </div>
+        </div>
+        ${forecast.length >= 2 ? `
+        <div class="pred-sparkline">
+          <span class="pred-sparkline-label">7-Day Forecast</span>
+          <svg viewBox="0 0 80 20" preserveAspectRatio="none" class="sparkline-svg">
+            <polyline points="${sparkPoints}" fill="none" stroke="${colors.bar}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>` : ''}
+        <div class="pred-top-crime" style="font-size:0.78rem; color:var(--muted); margin-top:8px;">
+          Primary Crime: <strong style="color:#e2e8f0;">${escapeHtml(topCrime)}</strong>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function renderAnomalyDetection(data) {
+  const container = els.anomalyDetectionPanel;
+  if (!container) return;
+  const anomalies = (data.anomalyCallouts || []).slice(0, 8);
+  if (!anomalies.length) {
+    container.innerHTML = `
+      <div class="anomaly-clear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:36px;height:36px;color:#10b981;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div>
+          <div style="font-weight:600;color:#6ee7b7;margin-bottom:4px;">Normal Behavioral Baseline</div>
+          <div class="muted" style="font-size:0.84rem;">No significant Z-score deviations detected in the selected analysis window.</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const sevColors = {
+    critical: { border: 'rgba(239,68,68,0.6)', bg: 'rgba(239,68,68,0.1)', badge: '#fca5a5', badgeBg: 'rgba(239,68,68,0.2)' },
+    high:     { border: 'rgba(245,158,11,0.5)', bg: 'rgba(245,158,11,0.08)', badge: '#fde68a', badgeBg: 'rgba(245,158,11,0.15)' },
+    moderate: { border: 'rgba(168,85,247,0.4)', bg: 'rgba(168,85,247,0.07)', badge: '#c084fc', badgeBg: 'rgba(168,85,247,0.15)' },
+  };
+
+  container.innerHTML = anomalies.map((anomaly) => {
+    const sev = sevColors[anomaly.severity] || sevColors.moderate;
+    const issurge = anomaly.anomalyType === 'surge';
+    const zAbs = Math.abs(anomaly.zScore);
+    // Mini bar chart for signal series
+    const series = anomaly.signalSeries || [];
+    const seriesMax = Math.max(...series, 1);
+    const miniBar = series.map(v =>
+      `<span class="anomaly-mini-bar" style="height:${Math.max(4, Math.round((v / seriesMax) * 28))}px;background:${issurge ? '#ef4444' : '#a855f7'};opacity:${v > 0 ? 0.7 + (v/seriesMax)*0.3 : 0.2}"></span>`
+    ).join('');
+    const affectedDistricts = (anomaly.topAffectedDistricts || []).slice(0, 3);
+    return `
+      <article class="anomaly-callout" style="border-color:${sev.border};background:${sev.bg};">
+        <div class="anomaly-header">
+          <div class="anomaly-title-block">
+            <span class="anomaly-type-badge" style="background:${sev.badgeBg};color:${sev.badge};">
+              ${issurge ? '▲ SURGE' : '▼ SUPPRESSION'}
+            </span>
+            <strong class="anomaly-crime-name">${escapeHtml(anomaly.crimeName)}</strong>
+          </div>
+          <div class="anomaly-zscore" style="color:${sev.badge};">
+            z = ${anomaly.zScore > 0 ? '+' : ''}${anomaly.zScore}
+          </div>
+        </div>
+
+        <div class="anomaly-stats-row">
+          <div class="anomaly-stat">
+            <span class="anomaly-stat-label">Observed (14d)</span>
+            <span class="anomaly-stat-val" style="color:${issurge ? '#fca5a5' : '#c084fc'}">${formatNumber(anomaly.signalCount)}</span>
+          </div>
+          <div class="anomaly-stat">
+            <span class="anomaly-stat-label">Expected</span>
+            <span class="anomaly-stat-val">${anomaly.expectedCount}</span>
+          </div>
+          <div class="anomaly-stat">
+            <span class="anomaly-stat-label">Baseline σ</span>
+            <span class="anomaly-stat-val">${anomaly.baselineStdDev}</span>
+          </div>
+          <div class="anomaly-stat">
+            <span class="anomaly-stat-label">Severity</span>
+            <span class="anomaly-stat-val" style="color:${sev.badge};text-transform:uppercase;">${anomaly.severity}</span>
+          </div>
+        </div>
+
+        <div class="anomaly-sparkrow">
+          <span style="font-size:0.72rem;color:var(--muted);margin-right:6px;">14-day signal:</span>
+          <div class="anomaly-mini-bars">${miniBar}</div>
+        </div>
+
+        ${affectedDistricts.length ? `
+        <div class="anomaly-districts">
+          <span style="font-size:0.72rem;color:var(--muted);">Hotzone:</span>
+          ${affectedDistricts.map(d => `<span class="badge-tag" style="font-size:0.7rem;">${escapeHtml(d.districtName)} (${d.count})</span>`).join('')}
+        </div>` : ''}
+
+        <div class="anomaly-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--accent-gold);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>${escapeHtml(anomaly.investigatorNote)}</span>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function renderStrategicHub(payload) {
+  renderStrategicInsights(payload.strategicInsights || []);
+  renderSocioCorrelation(payload);
+  renderPredictiveRisk(payload);
+  renderAnomalyDetection(payload);
+  if (els.sihStatus) {
+    const computedAt = payload.computedAt ? new Date(payload.computedAt).toLocaleTimeString() : 'unknown';
+    els.sihStatus.innerHTML = `<span class="live-dot"></span> Computed at ${computedAt}`;
+  }
+}
+
 async function fetchQuickML(path, body) {
   return api(path, { method: 'POST', body });
 }
@@ -944,7 +1200,37 @@ async function refreshAll() {
     setStatus(`Error: ${error.message}`);
     console.error(error);
   }
+
+  // Strategic Intelligence Hub loads independently so it never blocks the main dashboard
+  refreshStrategicHub();
 }
+
+async function refreshStrategicHub() {
+  if (els.sihStatus) {
+    els.sihStatus.innerHTML = `<span class="pulse-icon"></span> Computing intelligence...`;
+  }
+  // Show skeleton loaders so panels don't look empty while fetching
+  const skeletonHtml = `<div class="sih-skeleton"></div><div class="sih-skeleton"></div><div class="sih-skeleton" style="opacity:0.5"></div>`;
+  if (els.socioCorrelationPanel) els.socioCorrelationPanel.innerHTML = skeletonHtml;
+  if (els.predictiveRiskPanel) els.predictiveRiskPanel.innerHTML = skeletonHtml;
+  if (els.anomalyDetectionPanel) els.anomalyDetectionPanel.innerHTML = skeletonHtml;
+
+  try {
+    const socioPred = await fetchSocioPredictive();
+    state.socioPredictive = socioPred;
+    renderStrategicHub(socioPred);
+  } catch (error) {
+    console.error('Strategic Hub error:', error);
+    if (els.sihStatus) {
+      els.sihStatus.innerHTML = `<span style="color:#ef4444;">⚠ Hub error: ${escapeHtml(error.message)}</span>`;
+    }
+    const errHtml = `<div class="muted" style="padding:12px;font-size:0.82rem;">Could not load data: ${escapeHtml(error.message)}</div>`;
+    if (els.socioCorrelationPanel) els.socioCorrelationPanel.innerHTML = errHtml;
+    if (els.predictiveRiskPanel) els.predictiveRiskPanel.innerHTML = errHtml;
+    if (els.anomalyDetectionPanel) els.anomalyDetectionPanel.innerHTML = errHtml;
+  }
+}
+
 
 async function runNlq() {
   const question = els.questionInput.value.trim();

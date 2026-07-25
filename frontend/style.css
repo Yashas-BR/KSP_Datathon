@@ -1337,3 +1337,540 @@ input:checked + .slider:before {
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Strategic Intelligence Hub
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sih-panel {
+  padding: 24px 28px 28px;
+  background: linear-gradient(160deg,
+    rgba(15, 23, 42, 0.97) 0%,
+    rgba(10, 18, 36, 0.95) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.sih-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(168, 85, 247, 0.6) 30%,
+    rgba(6, 182, 212, 0.6) 60%,
+    rgba(239, 68, 68, 0.5) 85%,
+    transparent 100%);
+}
+
+/* Strategic Summary Insights Bar */
+.sih-insights-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  min-height: 0;
+}
+
+.sih-insight-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.4s ease both;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.sih-insight-pill:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.06);
+}
+
+/* Three-column Sub-panel Grid */
+.sih-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .sih-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .sih-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sih-sub-panel {
+  padding: 18px 20px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.sih-sub-panel:hover {
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.sih-sub-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.sih-sub-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sih-sub-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sih-icon-blue {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+.sih-icon-purple {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+}
+
+.sih-icon-red {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.sih-sub-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 3px;
+}
+
+.sih-sub-desc {
+  font-size: 0.77rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.sih-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 200px;
+  max-height: 520px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+.sih-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sih-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 2px;
+}
+
+/* ── Socio-Economic District Cards ── */
+.socio-district-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s, background 0.2s;
+  animation: fadeIn 0.35s ease both;
+}
+
+.socio-district-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(30, 41, 59, 0.75);
+}
+
+.socio-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.socio-district-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #f1f5f9;
+}
+
+.urbanization-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.urbanization-badge.urban-high {
+  background: rgba(6, 182, 212, 0.15);
+  color: #67e8f9;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.urbanization-badge.urban-mid {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.urbanization-badge.urban-low {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.socio-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 6px;
+  position: relative;
+}
+
+.socio-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+  flex-shrink: 0;
+}
+
+.socio-bar-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.socio-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.socio-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.socio-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Predictive Risk Cards ── */
+.pred-risk-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.35s ease both;
+  transition: filter 0.2s ease;
+}
+
+.pred-risk-card:hover {
+  filter: brightness(1.08);
+}
+
+.pred-risk-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pred-district-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.pred-risk-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.pred-score-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
+  line-height: 1.1;
+}
+
+.pred-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.pred-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pred-metric-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+
+.pred-metric-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.pred-sparkline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pred-sparkline-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.sparkline-svg {
+  width: 100%;
+  height: 20px;
+  display: block;
+}
+
+/* ── Anomaly Detection Callouts ── */
+.anomaly-clear {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  animation: fadeIn 0.35s ease;
+}
+
+.anomaly-callout {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.35s ease both;
+  transition: filter 0.2s ease;
+}
+
+.anomaly-callout:hover {
+  filter: brightness(1.06);
+}
+
+.anomaly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.anomaly-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.anomaly-type-badge {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 5px;
+  width: fit-content;
+}
+
+.anomaly-crime-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anomaly-zscore {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.anomaly-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.anomaly-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.anomaly-stat-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+
+.anomaly-stat-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.anomaly-sparkrow {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.anomaly-mini-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex: 1;
+  height: 28px;
+}
+
+.anomaly-mini-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.2s;
+  min-width: 3px;
+}
+
+.anomaly-districts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.anomaly-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  padding: 9px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  border-left: 2px solid rgba(245, 158, 11, 0.4);
+}
+
+/* pulse-icon for status pill inside SIH */
+.pulse-icon {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  box-shadow: 0 0 6px var(--accent-emerald);
+  animation: pulse-live 2s infinite;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Skeleton loader for hub panels while fetching */
+.sih-skeleton {
+  height: 72px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.5) 0%,
+    rgba(51, 65, 85, 0.6) 40%,
+    rgba(30, 41, 59, 0.5) 80%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+

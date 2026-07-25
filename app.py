@@ -12,6 +12,7 @@ from ksp.analytics import (
     build_dashboard_payload,
     build_network_payload,
     build_occupation_correlation_payload,
+    build_socio_predictive_payload,
     build_station_lookup_payload,
     build_trend_alert_payload,
 )
@@ -120,6 +121,16 @@ def create_app() -> Flask:
             return jsonify(build_station_lookup_payload(request, district_id=district_id))
         except Exception as e:
             logger.error(f"Stations endpoint error: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/socio_predictive")
+    def socio_predictive():
+        try:
+            district_id = request.args.get("district_id", type=int)
+            days = request.args.get("days", default=180, type=int)
+            return jsonify(build_socio_predictive_payload(request, district_id=district_id, days=days))
+        except Exception as e:
+            logger.error(f"Socio-Predictive endpoint error: {e}")
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/ml/risk", methods=["POST"])
