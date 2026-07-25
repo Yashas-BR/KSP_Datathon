@@ -142,6 +142,28 @@
     .district-tags{display:flex;flex-wrap:wrap;gap:6px}
     .district-tag{font:500 .72rem "IBM Plex Mono",monospace;padding:4px 10px;border-radius:100px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:var(--accent-blue)}
 
+    /* Case list inside MO panel */
+    .cases-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-top:4px;padding-right:2px}
+    .cases-list::-webkit-scrollbar{width:4px}
+    .cases-list::-webkit-scrollbar-thumb{background:rgba(148,163,184,.2);border-radius:4px}
+    .case-item{background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;transition:border-color .15s,background .15s;cursor:default}
+    .case-item:hover{background:rgba(6,182,212,.07);border-color:rgba(6,182,212,.3)}
+    .case-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:8px}
+    .case-no{font:600 .72rem "IBM Plex Mono",monospace;color:var(--accent-cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+    .case-date{font:400 .68rem "IBM Plex Mono",monospace;color:var(--muted);flex-shrink:0}
+    .case-crime{font:600 .8rem "Space Grotesk",sans-serif;margin-bottom:3px;color:var(--text)}
+    .case-loc{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+    .case-loc-dot{width:3px;height:3px;border-radius:50%;background:var(--muted);flex-shrink:0}
+    .case-facts{font-size:.72rem;color:rgba(148,163,184,.7);margin-top:4px;line-height:1.5;border-top:1px solid rgba(148,163,184,.08);padding-top:4px}
+    .case-empty{text-align:center;color:var(--muted);font-size:.8rem;padding:14px}
+
+    /* Highlight mode indicator */
+    .highlight-banner{display:none;align-items:center;gap:10px;padding:8px 16px;background:rgba(6,182,212,.1);border-bottom:1px solid rgba(6,182,212,.25);font-size:.8rem;color:var(--accent-cyan)}
+    .highlight-banner.active{display:flex}
+    .highlight-banner svg{width:14px;height:14px;flex-shrink:0}
+    .hl-reset{margin-left:auto;font:600 .72rem "IBM Plex Mono",monospace;background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.35);color:var(--accent-cyan);border-radius:6px;padding:3px 10px;cursor:pointer;transition:background .15s}
+    .hl-reset:hover{background:rgba(6,182,212,.28)}
+
     /* Associations */
     .assoc-table-wrap{overflow-x:auto}
     table{width:100%;border-collapse:collapse;font-size:.82rem}
@@ -306,6 +328,11 @@
           </svg>
           <p>Configure filters above and click <strong>Run Analysis</strong> to generate the network graph.</p>
         </div>
+        <div class="highlight-banner" id="highlightBanner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span id="highlightLabel">Showing ego-network</span>
+          <button class="hl-reset" id="hlResetBtn">Show All</button>
+        </div>
         <div id="networkCanvas" style="display:none"></div>
         <div class="graph-legend" id="graphLegend" style="display:none">
           <span class="legend-item"><span class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef444466"></span> Offender</span>
@@ -348,6 +375,12 @@
           <div class="district-tags" id="moDistricts"></div>
           <div class="mo-section-title">Key Stations</div>
           <div id="moStationsBars"></div>
+          <div class="mo-section-title" style="margin-top:14px">Linked Cases
+            <span id="caseCount" style="color:var(--accent-red);margin-left:6px"></span>
+          </div>
+          <div class="cases-list" id="moCasesList">
+            <div class="case-empty">No cases loaded.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -447,8 +480,74 @@
         interaction:{hover:true,tooltipDelay:150,zoomView:true,navigationButtons:false},
         layout:{improvedLayout:(d.nodes||[]).length<200}
       });
-      net.on('click',p=>{ if(p.nodes.length){ const o=offMap[p.nodes[0]]; if(o){renderMO(o);document.querySelectorAll('.offender-card').forEach(c=>c.classList.toggle('active',c.dataset.pid===o.personId));} }});
+      net.on('click',params=>{
+        if(params.nodes.length){
+          const nodeId=params.nodes[0];
+          const o=offMap[nodeId];
+          if(o){
+            renderMO(o);
+            document.querySelectorAll('.offender-card').forEach(c=>c.classList.toggle('active',c.dataset.pid===o.personId));
+          }
+          highlightEgo(nodeId);
+        } else {
+          resetHighlight();
+        }
+      });
       toast('Network: '+(d.nodes||[]).length+' nodes, '+(d.edges||[]).length+' edges',false,2500);
+    }
+
+    /* ── Ego-network highlight ── */
+    function highlightEgo(focalId){
+      if(!net||!data) return;
+      const neighbours=new Set(net.getConnectedNodes(focalId));
+      neighbours.add(focalId);
+      const connEdges=new Set(net.getConnectedEdges(focalId));
+
+      const nodeUpdates=(data.nodes||[]).map(n=>{
+        const isFocal=n.id===focalId;
+        const isNeighbour=neighbours.has(n.id);
+        if(isFocal){
+          return{id:n.id,opacity:1,borderWidth:4,
+            color:{background:n.type==='offender'?'#ef4444':n.type==='victim'?'#3b82f6':'#10b981',
+                   border:'#06b6d4',
+                   highlight:{background:'#f97316',border:'#06b6d4'}},
+            shadow:{enabled:true,size:28,color:'rgba(6,182,212,.55)',x:0,y:0}};
+        } else if(isNeighbour){
+          return{id:n.id,opacity:1};
+        } else {
+          return{id:n.id,opacity:.1,
+            color:{background:'rgba(30,41,59,.4)',border:'rgba(148,163,184,.1)'},
+            font:{color:'rgba(148,163,184,.15)'}};
+        }
+      });
+
+      const allEdges=net.body.data.edges.get();
+      const edgeUpdates=allEdges.map(e=>{
+        const isConn=connEdges.has(e.id);
+        return isConn
+          ?{id:e.id,opacity:1,width:Math.max(2,e.value||1)}
+          :{id:e.id,opacity:.05};
+      });
+
+      net.body.data.nodes.update(nodeUpdates);
+      net.body.data.edges.update(edgeUpdates);
+      net.focus(focalId,{scale:1.35,animation:{duration:550,easingFunction:'easeInOutQuad'}});
+
+      const name=(offMap[focalId]||{}).name||focalId;
+      g('highlightBanner').classList.add('active');
+      g('highlightLabel').textContent='Ego-network: '+name+' ('+neighbours.size+' connections)';
+    }
+
+    function resetHighlight(){
+      if(!net||!data) return;
+      const nodeUpdates=(data.nodes||[]).map(n=>({...visNode(n),opacity:1}));
+      net.body.data.nodes.update(nodeUpdates);
+      const allEdges=net.body.data.edges.get();
+      net.body.data.edges.update(allEdges.map(e=>({id:e.id,opacity:1})));
+      g('highlightBanner').classList.remove('active');
+      net.unselectAll();
+      document.querySelectorAll('.offender-card').forEach(c=>c.classList.remove('active'));
+      g('moPanel').style.display='none';
     }
 
     function visNode(n){
@@ -488,8 +587,9 @@
           '<div class="offender-badge">'+o.caseCount+' cases</div>';
         c.addEventListener('click',()=>{
           document.querySelectorAll('.offender-card').forEach(x=>x.classList.remove('active'));
-          c.classList.add('active'); renderMO(o);
-          if(net){net.selectNodes([o.personId]);net.focus(o.personId,{scale:1.4,animation:{duration:600,easingFunction:'easeInOutQuad'}});}
+          c.classList.add('active');
+          renderMO(o);
+          if(net){ net.selectNodes([o.personId]); highlightEgo(o.personId); }
         });
         el.appendChild(c);
       });
@@ -512,6 +612,34 @@
       const sb=g('moStationsBars'); sb.innerHTML='';
       const ms=Math.max(...(o.stations||[]).map(s=>s.count),1);
       (o.stations||[]).forEach(s=>sb.appendChild(bar(s.stationName,s.count,ms,'#06b6d4')));
+
+      // Cases list
+      renderCases(o.caseDetails||[],o.caseCount||0);
+    }
+
+    function renderCases(cases,total){
+      const el=g('moCasesList');
+      g('caseCount').textContent=total?'('+total+')':'';
+      if(!cases.length){el.innerHTML='<div class="case-empty">No case detail available.</div>';return;}
+      el.innerHTML='';
+      cases.forEach((c,i)=>{
+        const crimeColors={'Theft':'#f59e0b','Burglary':'#a855f7','Chain Snatching':'#06b6d4','Grievous Hurt':'#ef4444','Murder':'#ef4444','Robbery':'#f59e0b'};
+        const crimeColor=Object.entries(crimeColors).find(([k])=>c.crimeName&&c.crimeName.toLowerCase().includes(k.toLowerCase()));
+        const cc=crimeColor?crimeColor[1]:'var(--muted)';
+        const card=document.createElement('div'); card.className='case-item';
+        card.innerHTML=
+          '<div class="case-head">'+
+            '<span class="case-no" title="'+esc(c.crimeNo)+'">'+esc(c.crimeNo||'Case '+(i+1))+'</span>'+
+            (c.date?'<span class="case-date">'+esc(c.date)+'</span>':'')+
+          '</div>'+
+          '<div class="case-crime" style="color:'+cc+'">'+esc(c.crimeName||'Unknown')+'</div>'+
+          '<div class="case-loc">'+
+            '<svg style="width:10px;height:10px;color:var(--muted);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+
+            esc(c.station||'?')+
+            (c.district&&c.district!==c.station?'<span class="case-loc-dot"></span>'+esc(c.district):'')+'</div>'+
+          (c.briefFacts?'<div class="case-facts">'+esc(c.briefFacts)+(c.briefFacts.length>=150?'&hellip;':'')+'</div>':'');
+        el.appendChild(card);
+      });
     }
 
     function bar(label,count,max,color){
@@ -576,11 +704,8 @@
 
     g('edgeFilter').addEventListener('change',()=>{ if(data) renderGraph(data); });
 
-    g('moClearBtn').addEventListener('click',()=>{
-      g('moPanel').style.display='none';
-      document.querySelectorAll('.offender-card').forEach(c=>c.classList.remove('active'));
-      if(net) net.unselectAll();
-    });
+    g('moClearBtn').addEventListener('click',()=>{ resetHighlight(); });
+    g('hlResetBtn').addEventListener('click',()=>{ resetHighlight(); });
 
     loadDistricts();
   })();
