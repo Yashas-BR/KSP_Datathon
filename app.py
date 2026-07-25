@@ -5,6 +5,19 @@ import re
 import logging
 from pathlib import Path
 
+# ── Load .env file (simple parser, no extra dependencies) ────────────────────
+_ENV_FILE = Path(__file__).resolve().parent / ".env"
+if _ENV_FILE.exists():
+    with _ENV_FILE.open("r", encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _key, _, _val = _line.partition("=")
+                _key = _key.strip()
+                _val = _val.strip().strip('"').strip("'")
+                if _key and _val and _key not in os.environ:
+                    os.environ[_key] = _val
+
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -22,9 +35,13 @@ from ksp.quickml import (
     build_quickml_risk_payload,
 )
 
-# Setup logging
+import sys
+
+# Setup logging & ensure stdout is flushed immediately
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ksp-app")
+logging.getLogger("werkzeug").setLevel(logging.INFO)
+
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -52,6 +69,11 @@ def create_app() -> Flask:
             api_index = parts.index("api")
             normalized_path = "/" + "/".join(parts[api_index:])
             request.environ["PATH_INFO"] = normalized_path
+
+    @app.after_request
+    def log_request_info(response):
+        print(f" -> [{request.method}] {request.path} {response.status_code}", flush=True)
+        return response
 
     @app.route("/health", methods=["GET", "HEAD"])
     def health():
@@ -172,4 +194,5 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT", 
                os.environ.get("PORT", 8000)))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    debug = os.environ.get("FLASK_DEBUG", "true").lower() in ("true", "1")
+    app.run(host="0.0.0.0", port=port, debug=debug)

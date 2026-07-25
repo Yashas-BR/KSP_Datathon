@@ -1232,12 +1232,197 @@ async function refreshStrategicHub() {
 }
 
 
+// ── NLQ Renderer ──────────────────────────────────────────────────────────────
+
+function _nlqTypewriter(element, text, speedMs = 12) {
+  element.textContent = '';
+  let index = 0;
+  function tick() {
+    if (index < text.length) {
+      element.textContent += text[index++];
+      setTimeout(tick, speedMs);
+    }
+  }
+  tick();
+}
+
+function _nlqHighlightZcql(query) {
+  const keywords = ['SELECT', 'FROM', 'WHERE', 'LIMIT', 'OFFSET', 'ORDER', 'BY',
+                    'AND', 'OR', 'LIKE', 'IN', 'NOT', 'IS', 'NULL', 'ASC', 'DESC'];
+
+  function highlightNonString(seg) {
+    seg = escapeHtml(seg);
+    keywords.forEach((kw) => {
+      seg = seg.replace(new RegExp(`\\b${kw}\\b`, 'gi'), `<span class="zcql-kw">${kw}</span>`);
+    });
+    return seg.replace(/\b(\d+)\b/g, `<span class="zcql-num">$1</span>`);
+  }
+
+  // Process string literals FIRST (before escaping) to avoid &#039; entity bug
+  const parts = [];
+  const strRe = /'([^']*)'/g;
+  let last = 0;
+  let m;
+  while ((m = strRe.exec(query)) !== null) {
+    if (m.index > last) parts.push(highlightNonString(query.slice(last, m.index)));
+    parts.push(`<span class="zcql-str">'${escapeHtml(m[1])}'</span>`);
+    last = m.index + m[0].length;
+  }
+  if (last < query.length) parts.push(highlightNonString(query.slice(last)));
+  return parts.join('');
+}
+
+function _nlqBuildTable(rows) {
+  if (!rows || rows.length === 0) {
+    return `<div class="nlq-empty-rows">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;opacity:.35;margin-bottom:8px"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      <p>No records returned.</p>
+    </div>`;
+  }
+
+  const keys = Object.keys(rows[0]);
+  const VISIBLE_COLS = 8;
+  const displayKeys = keys.slice(0, VISIBLE_COLS);
+  const PAGE_SIZE = 15;
+  const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+  let currentPage = 0;
+
+  const tableId = `nlq-tbl-${Date.now()}`;
+  const pageId = `nlq-pg-${Date.now()}`;
+  const infoId = `nlq-info-${Date.now()}`;
+
+  function renderPage(page) {
+    const start = page * PAGE_SIZE;
+    const slice = rows.slice(start, start + PAGE_SIZE);
+    const bodyHtml = slice.map((row) =>
+      `<tr>${displayKeys.map((k) => `<td>${escapeHtml(String(row[k] ?? ''))}</td>`).join('')}</tr>`
+    ).join('');
+    const tbl = document.getElementById(tableId);
+    if (tbl) tbl.querySelector('tbody').innerHTML = bodyHtml;
+    const pg = document.getElementById(pageId);
+    if (pg) pg.querySelectorAll('.nlq-page-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === page);
+    });
+    const info = document.getElementById(infoId);
+    if (info) info.textContent = `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, rows.length)} of ${rows.length} rows`;
+  }
+
+  const headerHtml = displayKeys.map((k) => `<th>${escapeHtml(k)}</th>`).join('');
+  const pageBtns = totalPages > 1
+    ? Array.from({ length: Math.min(totalPages, 10) }, (_, i) =>
+        `<button class="nlq-page-btn${i === 0 ? ' active' : ''}" data-page="${i}">${i + 1}</button>`
+      ).join('')
+    : '';
+
+  const hiddenCols = keys.length > VISIBLE_COLS ? `<span class="nlq-hidden-cols">+${keys.length - VISIBLE_COLS} more columns hidden</span>` : '';
+
+  const html = `
+    <div class="nlq-table-header-row">
+      <span id="${infoId}" class="nlq-row-info">Showing 1–${Math.min(PAGE_SIZE, rows.length)} of ${rows.length} rows</span>
+      ${hiddenCols}
+    </div>
+    <div class="nlq-table-scroll">
+      <table id="${tableId}" class="nlq-data-table">
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    ${totalPages > 1 ? `<div id="${pageId}" class="nlq-pagination">${pageBtns}</div>` : ''}
+  `;
+
+  // Defer wiring of pagination until after DOM insert
+  setTimeout(() => {
+    renderPage(0);
+    if (totalPages > 1) {
+      document.getElementById(pageId)?.querySelectorAll('.nlq-page-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          currentPage = Number(btn.getAttribute('data-page'));
+          renderPage(currentPage);
+        });
+      });
+    }
+  }, 0);
+
+  return html;
+}
+
+function renderNlq(result) {
+  // ── Error state ──
+  if (result.error) {
+    const isNoKey = result.error.includes('GROQ_API_KEY') || result.error.includes('No LLM');
+    els.nlqAnswer.innerHTML = `
+      <div class="nlq-error-block">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;color:#f87171"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <strong>${escapeHtml(result.error)}</strong>
+          ${isNoKey ? `<p style="margin:6px 0 0;font-size:0.8rem;opacity:.8;">Get a free API key at <a href="https://console.groq.com" target="_blank" rel="noopener" style="color:#60a5fa">console.groq.com</a>, then set it as <code>GROQ_API_KEY</code> and restart the server.</p>` : ''}
+          ${result.hint ? `<p style="margin:4px 0 0;font-size:0.8rem;opacity:.75">${escapeHtml(result.hint)}</p>` : ''}
+        </div>
+      </div>`;
+    els.nlqQuery.innerHTML = 'No query generated.';
+    els.nlqRows.innerHTML = '';
+    return;
+  }
+
+  // ── Answer block ──
+  const intentHtml = result.intent
+    ? `<div class="nlq-intent-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>${escapeHtml(result.intent)}</div>`
+    : '';
+
+  const metaHtml = [
+    result.citations?.length ? `<span class="nlq-meta-chip">Fields: ${result.citations.map(escapeHtml).join(', ')}</span>` : '',
+    result.assumptions?.length ? `<span class="nlq-meta-chip nlq-assume">Assumptions: ${result.assumptions.map(escapeHtml).join(' · ')}</span>` : '',
+    result.rowCount != null ? `<span class="nlq-meta-chip nlq-rows-chip">${result.rowCount} row${result.rowCount !== 1 ? 's' : ''} returned</span>` : '',
+  ].filter(Boolean).join('');
+
+  els.nlqAnswer.innerHTML = `
+    ${intentHtml}
+    <p id="nlq-answer-text" class="nlq-answer-text"></p>
+    ${metaHtml ? `<div class="nlq-meta-row">${metaHtml}</div>` : ''}
+  `;
+  _nlqTypewriter(document.getElementById('nlq-answer-text'), result.answer || 'No answer generated.');
+
+  // ── Query block ──
+  if (result.query) {
+    els.nlqQuery.innerHTML = _nlqHighlightZcql(result.query);
+    els.nlqQuery._rawQuery = result.query;
+  } else {
+    els.nlqQuery.textContent = 'No query generated.';
+    els.nlqQuery._rawQuery = '';
+  }
+
+  // ── Results table ──
+  els.nlqRows.innerHTML = _nlqBuildTable(result.rows || []);
+}
+
+// Copy query button
+els.copyQueryBtn?.addEventListener('click', () => {
+  const text = els.nlqQuery._rawQuery || els.nlqQuery.textContent || '';
+  if (!text || text === 'No query generated.') return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = els.copyQueryBtn;
+    const original = btn.innerHTML;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    btn.style.color = '#34d399';
+    setTimeout(() => { btn.innerHTML = original; btn.style.color = ''; }, 2000);
+  });
+});
+
 async function runNlq() {
   const question = els.questionInput.value.trim();
   if (!question) {
     els.nlqAnswer.textContent = 'Please enter a natural language query first.';
     return;
   }
+
+  // Optimistic loading state
+  els.nlqAnswer.innerHTML = `<div class="nlq-thinking">
+    <span class="nlq-dot"></span><span class="nlq-dot"></span><span class="nlq-dot"></span>
+    <span style="margin-left:8px;opacity:.7;font-size:.85rem">Thinking...</span>
+  </div>`;
+  els.nlqQuery.textContent = 'Generating query...';
+  els.nlqRows.innerHTML = '';
+
   els.askButton.disabled = true;
   els.askButton.innerHTML = `<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg> Running Query...`;
   try {
