@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import logging
 from pathlib import Path
 
@@ -33,9 +34,11 @@ def create_app() -> Flask:
     
     # CORS - Configured ONLY ONCE
     CORS(app, origins=[
+        re.compile(r"^https?://localhost(:\\d+)?$"),
+        re.compile(r"^https?://127\\.0\\.0\\.1(:\\d+)?$"),
         "https://ksp-demo-60076799070.development.catalystserverless.in",
-        "https://*.catalystserverless.in",
-        "https://*.catalystappsail.in"
+        re.compile(r"^https://.*\\.catalystserverless\\.in$"),
+        re.compile(r"^https://.*\\.catalystappsail\\.in$"),
     ])
 
     @app.before_request

@@ -6,51 +6,103 @@
   <title>KSP AI-Driven Crime Analytics Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
   <div class="backdrop backdrop-a"></div>
   <div class="backdrop backdrop-b"></div>
+  <div class="backdrop backdrop-c"></div>
   <div class="shell">
     <header class="hero card">
       <div>
-        <p class="eyebrow">Karnataka State Police Datathon 2026</p>
+        <div class="header-pill">
+          <span class="live-dot"></span>
+          <span class="eyebrow">Karnataka State Police Datathon 2026</span>
+        </div>
         <h1>KSP AI-Driven Crime Analytics Platform</h1>
         <p class="hero-copy">
-          District drill-down, spatiotemporal hotspot detection, co-accused network analysis,
-          occupation-based correlation, QuickML risk scoring, and NLQ over the crime store.
+          Real-time district drill-down, spatiotemporal hotspot detection, co-accused network analysis,
+          occupation correlation, QuickML risk scoring, and natural language AI query assistant over crime store.
         </p>
       </div>
       <div class="hero-badges">
-        <span class="chip chip-success">Catalyst AppSail</span>
-        <span class="chip chip-info">ZCQL-safe pagination</span>
-        <span class="chip chip-warn">QuickML + hosted LLM</span>
+        <span class="chip chip-success"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Catalyst AppSail</span>
+        <span class="chip chip-info"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ZCQL-Safe Engine</span>
+        <span class="chip chip-warn"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> QuickML + Hosted LLM</span>
       </div>
     </header>
 
     <section class="toolbar card">
       <div class="control-group">
-        <label for="districtSelect">District</label>
+        <label for="districtSelect">District Focus</label>
         <select id="districtSelect"></select>
+      </div>
+      <div class="control-group">
+        <label for="districtSearch">Quick Search</label>
+        <input id="districtSearch" list="districtOptions" type="text" placeholder="Search district or station..." autocomplete="off">
+        <datalist id="districtOptions"></datalist>
       </div>
       <div class="control-group">
         <label for="stationSelect">Police Station</label>
         <select id="stationSelect"></select>
       </div>
       <div class="control-group slider-group">
-        <label for="hourSlider">Hour of Day <span id="hourLabel">All day</span></label>
+        <label for="hourSlider">Hour of Day <span id="hourLabel" class="badge-tag">All day</span></label>
         <input id="hourSlider" type="range" min="0" max="24" step="1" value="24">
+        <div id="hourBands" class="hour-bands" aria-label="Peak hour bands"></div>
       </div>
       <div class="control-group slider-group">
-        <label for="windowSlider">Trailing Window <span id="windowLabel">365 days</span></label>
+        <label for="windowSlider">Trailing Window <span id="windowLabel" class="badge-tag">365 days</span></label>
         <input id="windowSlider" type="range" min="30" max="365" step="15" value="365">
+        <div id="windowPresets" class="preset-row">
+          <button type="button" class="secondary tiny" data-days="7">7d</button>
+          <button type="button" class="secondary tiny" data-days="30">30d</button>
+          <button type="button" class="secondary tiny" data-days="90">90d</button>
+          <button type="button" class="secondary tiny" data-days="180">180d</button>
+          <button type="button" class="secondary tiny" data-days="365">365d</button>
+        </div>
       </div>
       <div class="control-group actions">
-        <button id="refreshButton" class="primary">Refresh analytics</button>
-        <button id="resetButton" class="secondary">Reset filters</button>
+        <button id="refreshButton" class="primary"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Apply Filters & Run</button>
+        <button id="resetButton" class="secondary">Reset Filters</button>
       </div>
+      <div class="control-group quick-presets">
+        <label>Strategic Quick Filters</label>
+        <div class="preset-row" id="quickPresets">
+          <button type="button" class="secondary tiny" data-preset="top10">Top 10 High-Crime Districts</button>
+          <button type="button" class="secondary tiny" data-preset="weekend">Weekend Incident Window</button>
+          <button type="button" class="secondary tiny" data-preset="night">Night Curfew Hours (21:00-05:00)</button>
+          <button type="button" class="secondary tiny" data-preset="none">Clear Filters</button>
+        </div>
+      </div>
+      <div class="control-group compare-control">
+        <label for="compareToggle">Comparative Analysis</label>
+        <div class="compare-toggle-wrap">
+          <label class="switch">
+            <input id="compareToggle" type="checkbox">
+            <span class="slider round"></span>
+          </label>
+          <span class="muted">Enable side-by-side district comparison</span>
+        </div>
+        <div class="compare-picks" id="comparePicks">
+          <select id="compareDistrictA"></select>
+          <select id="compareDistrictB"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card compare-panel" id="comparePanel" hidden>
+      <div class="panel-head">
+        <div>
+          <p class="panel-kicker">Comparative Intelligence</p>
+          <h2>District vs District Metrics</h2>
+        </div>
+      </div>
+      <div id="compareGrid" class="compare-grid"></div>
     </section>
 
     <section class="stats-grid" id="statCards"></section>
@@ -59,19 +111,19 @@
       <section class="card map-panel">
         <div class="panel-head">
           <div>
-            <p class="panel-kicker">Advanced Visualization</p>
-            <h2>State to district to station map</h2>
+            <p class="panel-kicker">Spatial Intelligence Map</p>
+            <h2>State, District & Station Crime Geographic Density</h2>
           </div>
-          <div id="statusText" class="status-pill">Loading data...</div>
+          <div id="statusText" class="status-pill"><span class="pulse-icon"></span> Syncing dataset...</div>
         </div>
         <div id="mapCanvas" class="map-canvas"></div>
         <div class="map-foot">
           <div>
-            <p class="foot-label">District drill-down</p>
+            <p class="foot-label">Hierarchy & Station Drill-Down</p>
             <div id="districtTree" class="district-tree"></div>
           </div>
           <div>
-            <p class="foot-label">Spatiotemporal clusters</p>
+            <p class="foot-label">Spatiotemporal Hotspots</p>
             <div id="hotspotList" class="compact-list"></div>
           </div>
         </div>
@@ -81,8 +133,8 @@
         <section class="card insight-panel">
           <div class="panel-head">
             <div>
-              <p class="panel-kicker">Emerging Trend Alerts</p>
-              <h2>Red-zone signals</h2>
+              <p class="panel-kicker">Emerging Trend Signals</p>
+              <h2>Red-Zone Alerts & Spikes</h2>
             </div>
           </div>
           <div id="alertList" class="alert-list"></div>
@@ -91,8 +143,8 @@
         <section class="card insight-panel">
           <div class="panel-head">
             <div>
-              <p class="panel-kicker">Pattern Discovery</p>
-              <h2>Temporal cadence</h2>
+              <p class="panel-kicker">Temporal Cadence</p>
+              <h2>Hourly Incident Cadence (24-Hour)</h2>
             </div>
           </div>
           <div id="timelineBars" class="timeline-bars"></div>
@@ -104,10 +156,16 @@
       <section class="card graph-panel">
         <div class="panel-head">
           <div>
-            <p class="panel-kicker">Criminological Network</p>
-            <h2>Offender, victim, and location graph</h2>
+            <p class="panel-kicker">Criminological Graph</p>
+            <h2>Co-Accused & Incident Association Network</h2>
           </div>
-          <div class="panel-chip">vis-network</div>
+          <div class="panel-chip"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> vis-network</div>
+        </div>
+        <div class="network-legend">
+          <span class="legend-item"><span class="legend-dot offender"></span> Offender</span>
+          <span class="legend-item"><span class="legend-dot victim"></span> Victim</span>
+          <span class="legend-item"><span class="legend-dot station"></span> Station</span>
+          <span class="legend-item"><span class="legend-dot location"></span> Location</span>
         </div>
         <div id="graphCanvas" class="graph-canvas"></div>
         <div id="repeatOffenderList" class="repeat-list"></div>
@@ -116,20 +174,29 @@
       <section class="card predictive-panel">
         <div class="panel-head">
           <div>
-            <p class="panel-kicker">Sociological + AI</p>
-            <h2>QuickML scoring and correlations</h2>
+            <p class="panel-kicker">Predictive Intelligence & QuickML</p>
+            <h2>AI Risk Scoring & Correlation Engine</h2>
           </div>
         </div>
         <div class="ai-grid">
-          <article class="mini-card">
-            <h3>Risk scoring</h3>
-            <pre id="riskOutput" class="code-box">Waiting for QuickML output...</pre>
+          <article class="mini-card score-card-wrapper">
+            <div class="card-head-row">
+              <h3><svg class="heading-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Risk Scoring</h3>
+              <button type="button" class="btn-toggle-json" data-target="riskOutput">Raw JSON</button>
+            </div>
+            <div id="riskOutput" class="score-card-content">Loading...</div>
           </article>
-          <article class="mini-card">
-            <h3>Anomaly detection</h3>
-            <pre id="anomalyOutput" class="code-box">Waiting for QuickML output...</pre>
+
+          <article class="mini-card score-card-wrapper">
+            <div class="card-head-row">
+              <h3><svg class="heading-icon text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Anomaly Detection</h3>
+              <button type="button" class="btn-toggle-json" data-target="anomalyOutput">Raw JSON</button>
+            </div>
+            <div id="anomalyOutput" class="score-card-content">Loading...</div>
           </article>
         </div>
+
+        <div class="section-subheading">Sociological & Occupation Correlations</div>
         <div id="occupationInsights" class="insight-stack"></div>
         <div id="occupationTable" class="occupation-table"></div>
       </section>
@@ -138,40 +205,90 @@
     <section class="card nlq-panel">
       <div class="panel-head">
         <div>
-          <p class="panel-kicker">Natural Language Query</p>
-          <h2>Ask in plain English</h2>
+          <p class="panel-kicker">Natural Language Query (NLQ)</p>
+          <h2>Ask the Crime Database in Plain English</h2>
         </div>
+        <div class="chip chip-info"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Hosted LLM + ZCQL</div>
       </div>
+
+      <div class="nlq-quick-suggestions">
+        <span class="suggestion-label">Try asking:</span>
+        <button type="button" class="chip-suggestion" data-query="Show me theft cases in Bengaluru last month">Theft cases in Bengaluru</button>
+        <button type="button" class="chip-suggestion" data-query="List high severity crimes during night hours">Night curfew incidents</button>
+        <button type="button" class="chip-suggestion" data-query="Show online fraud and cyber crime reports in Mysore">Cyber fraud in Mysore</button>
+        <button type="button" class="chip-suggestion" data-query="Find robbery cases registered in 2025">Robbery cases 2025</button>
+      </div>
+
       <div class="nlq-grid">
-        <textarea id="questionInput" rows="3" placeholder="Show me robbery cases in Bengaluru last month"></textarea>
+        <textarea id="questionInput" rows="3" placeholder="Ask a question e.g. 'Show me theft cases in Bengaluru last month'"></textarea>
         <div class="nlq-actions">
-          <button id="askButton" class="primary">Run query</button>
-          <p class="hint">The backend asks the hosted LLM for a safe ZCQL SELECT and executes it through Catalyst.</p>
+          <button id="askButton" class="primary"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute Query</button>
+          <p class="hint">Translates natural questions into safe ZCQL SELECT queries executed directly via Catalyst.</p>
         </div>
       </div>
+
       <div class="nlq-result-grid">
-        <article class="mini-card">
-          <h3>Answer</h3>
-          <div id="nlqAnswer" class="text-block">Waiting for a question.</div>
+        <article class="mini-card nlq-answer-card">
+          <div class="nlq-card-head">
+            <h3><svg class="heading-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> AI Answer & Insights</h3>
+          </div>
+          <div id="nlqAnswer" class="text-block">Waiting for a question. Select a sample prompt above or enter a query.</div>
         </article>
-        <article class="mini-card">
-          <h3>Query</h3>
-          <pre id="nlqQuery" class="code-box">No query yet.</pre>
+
+        <article class="mini-card nlq-query-card">
+          <div class="nlq-card-head">
+            <h3><svg class="heading-icon text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Generated ZCQL Query</h3>
+            <button id="copyQueryBtn" class="btn-copy-code" title="Copy SQL Query"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>
+          </div>
+          <pre id="nlqQuery" class="code-box">No query generated yet.</pre>
         </article>
       </div>
-      <div class="mini-card">
-        <h3>Rows</h3>
+
+      <div class="mini-card nlq-table-card">
+        <div class="nlq-card-head">
+          <h3><svg class="heading-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Result Records</h3>
+        </div>
         <div id="nlqRows" class="table-wrap"></div>
       </div>
     </section>
   </div>
   
+  <!-- Interactive Case Browser Modal -->
+  <div id="caseBrowserModal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="panel-kicker">Incident Intelligence Browser</p>
+          <h2 id="caseBrowserTitle">Police Station Cases</h2>
+        </div>
+        <button id="closeCaseBrowserBtn" class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-filter-bar">
+        <input id="modalCaseSearch" type="text" placeholder="Search facts, crime type, crime no, date...">
+        <span id="caseCountBadge" class="badge-tag">0 Cases</span>
+      </div>
+      <div id="caseListContent" class="case-list-container">
+        <!-- Case cards dynamically populated here -->
+      </div>
+    </div>
+  </div>
+
   <script>
-  window.BACKEND_URL = 'https://ksp-backend-50043682310.development.catalystappsail.in';
-</script>
+    (function () {
+      var FLASK_PORT = 8000;
+      var h = location.hostname;
+      var isLocal = h === 'localhost' || h === '127.0.0.1';
+      if (isLocal && Number(location.port) !== FLASK_PORT) {
+        window.BACKEND_URL = 'http://' + h + ':' + FLASK_PORT;
+      } else {
+        window.BACKEND_URL = location.origin;
+      }
+    })();
+  </script>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <script src="./app.js"></script>
+  <script src="/assets/app.js"></script>
 </body>
 </html>

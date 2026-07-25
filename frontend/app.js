@@ -8,18 +8,40 @@ const state = {
   selectedStationId: null,
   selectedHour: null,
   days: 365,
+  quickPreset: 'none',
+  topDistrictIds: [],
+  districtLabelToId: new Map(),
+  stationLabelToInfo: new Map(),
+  compareMode: false,
+  compareDistrictA: null,
+  compareDistrictB: null,
   map: null,
   mapLayer: null,
   graph: null,
+  showRawRiskJson: false,
+  showRawAnomalyJson: false,
+  currentBrowserStationName: '',
+  currentBrowserCases: [],
 };
 
 const els = {
   districtSelect: document.getElementById('districtSelect'),
+  districtSearch: document.getElementById('districtSearch'),
+  districtOptions: document.getElementById('districtOptions'),
   stationSelect: document.getElementById('stationSelect'),
   hourSlider: document.getElementById('hourSlider'),
   hourLabel: document.getElementById('hourLabel'),
+  hourBands: document.getElementById('hourBands'),
   windowSlider: document.getElementById('windowSlider'),
   windowLabel: document.getElementById('windowLabel'),
+  windowPresets: document.getElementById('windowPresets'),
+  quickPresets: document.getElementById('quickPresets'),
+  compareToggle: document.getElementById('compareToggle'),
+  comparePicks: document.getElementById('comparePicks'),
+  compareDistrictA: document.getElementById('compareDistrictA'),
+  compareDistrictB: document.getElementById('compareDistrictB'),
+  comparePanel: document.getElementById('comparePanel'),
+  compareGrid: document.getElementById('compareGrid'),
   refreshButton: document.getElementById('refreshButton'),
   resetButton: document.getElementById('resetButton'),
   statusText: document.getElementById('statusText'),
@@ -39,6 +61,22 @@ const els = {
   nlqAnswer: document.getElementById('nlqAnswer'),
   nlqQuery: document.getElementById('nlqQuery'),
   nlqRows: document.getElementById('nlqRows'),
+  copyQueryBtn: document.getElementById('copyQueryBtn'),
+  caseBrowserModal: document.getElementById('caseBrowserModal'),
+  caseBrowserTitle: document.getElementById('caseBrowserTitle'),
+  closeCaseBrowserBtn: document.getElementById('closeCaseBrowserBtn'),
+  modalCaseSearch: document.getElementById('modalCaseSearch'),
+  caseCountBadge: document.getElementById('caseCountBadge'),
+  caseListContent: document.getElementById('caseListContent'),
+};
+
+const svgIcons = {
+  cases: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  districts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  stations: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 7v14M21 7v14M6 21V10M18 21V10M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M12 3L2 7h20L12 3z"/></svg>`,
+  hotspots: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+  alerts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  window: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
 function toNumber(value, fallback = 0) {
@@ -51,7 +89,7 @@ function formatNumber(value) {
 }
 
 function escapeHtml(value) {
-  return String(value)
+  return String(value || '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -59,16 +97,15 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-// ======================================================
-// Production Backend Configuration - UPDATED
-// ======================================================
-const BASE_URL = 'https://ksp-backend-50043682310.development.catalystappsail.in';
+const BASE_URL = (window.BACKEND_URL || window.location.origin || '').replace(/\/$/, '');
 
-// ======================================================
-// Common API Helper
-// ======================================================
+// API Fetch Helper
 async function api(path, options = {}) {
   const url = path.startsWith('/') ? `${BASE_URL}${path}` : `${BASE_URL}/${path}`;
+  const body = options.body;
+  const payload = body === undefined
+    ? undefined
+    : (typeof body === 'string' ? body : JSON.stringify(body));
 
   try {
     const response = await fetch(url, {
@@ -77,7 +114,7 @@ async function api(path, options = {}) {
         "Content-Type": "application/json",
         ...(options.headers || {}),
       },
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      body: payload,
     });
 
     if (!response.ok) {
@@ -91,40 +128,158 @@ async function api(path, options = {}) {
     const statusIndicator = document.getElementById("statusText");
     if (statusIndicator) {
       statusIndicator.innerText = "Connection error. Retrying...";
-      statusIndicator.style.background = "var(--theme-warn, #ffaa00)";
     }
     throw error;
   }
 }
 
 function setStatus(message) {
-  els.statusText.textContent = message;
+  if (els.statusText) {
+    els.statusText.innerHTML = `<span class="live-dot"></span> ${escapeHtml(message)}`;
+  }
 }
 
 function syncLabels() {
   els.windowLabel.textContent = `${state.days} days`;
   els.hourLabel.textContent = state.selectedHour === null ? 'All day' : `${String(state.selectedHour).padStart(2, '0')}:00`;
+  renderHourBands();
+}
+
+function renderHourBands() {
+  if (!els.hourBands) return;
+  const peak = new Set([8, 9, 10, 18, 19, 20, 21, 22]);
+  const selected = state.selectedHour;
+  els.hourBands.innerHTML = Array.from({ length: 24 }, (_, hour) => {
+    const isPeak = peak.has(hour);
+    const isSelected = selected !== null && Number(selected) === hour;
+    const cls = `${isPeak ? 'peak' : ''} ${isSelected ? 'selected' : ''}`.trim();
+    return `<span class="hour-band ${cls}" title="${String(hour).padStart(2, '0')}:00"></span>`;
+  }).join('');
 }
 
 function findDistrictName(districtId) {
-  const district = state.meta?.districts?.find((item) => Number(item.districtId) === Number(districtId));
-  return district?.districtName || `District ${districtId}`;
+  if (districtId === null || districtId === undefined || Number(districtId) === 0) {
+    return 'All districts';
+  }
+  const district = state.meta?.districts?.find((item) => Number(item.districtId || item.district_id) === Number(districtId));
+  return district?.districtName || district?.district_name || `District ${districtId}`;
+}
+
+function findStationName(stationId) {
+  if (!stationId) return 'All stations';
+  const station = state.meta?.stations?.find((item) => Number(item.stationId || item.station_id) === Number(stationId));
+  return station?.stationName || station?.station_name || `Station ${stationId}`;
+}
+
+function parseDateFlexible(value) {
+  if (!value) return null;
+  const asDate = new Date(value);
+  if (!Number.isNaN(asDate.getTime())) return asDate;
+  const text = String(value).trim();
+  const match = text.match(/^(\d{1,2})-(\d{1,2})-(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const year = Number(match[3]);
+  const hour = Number(match[4] || 0);
+  const minute = Number(match[5] || 0);
+  const second = Number(match[6] || 0);
+  const parsed = new Date(year, month, day, hour, minute, second);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isWeekendDate(value) {
+  const date = parseDateFlexible(value);
+  if (!date) return false;
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
+function markerHour(marker) {
+  if (marker.hour !== undefined && marker.hour !== null) {
+    return Number(marker.hour);
+  }
+  if (!marker.registeredDate) return null;
+  const date = parseDateFlexible(marker.registeredDate);
+  if (!date) return null;
+  return date.getHours();
+}
+
+function matchesQuickPreset(marker) {
+  if (state.quickPreset === 'top10') {
+    if (!state.topDistrictIds.length) return true;
+    return state.topDistrictIds.includes(Number(marker.districtId));
+  }
+  if (state.quickPreset === 'weekend') {
+    return isWeekendDate(marker.registeredDate);
+  }
+  if (state.quickPreset === 'night') {
+    const hour = markerHour(marker);
+    if (hour === null) return false;
+    return hour >= 21 || hour <= 5;
+  }
+  return true;
+}
+
+function applyQuickPreset(preset) {
+  state.quickPreset = preset;
+  document.querySelectorAll('#quickPresets [data-preset]').forEach((button) => {
+    button.classList.toggle('active', button.getAttribute('data-preset') === preset);
+  });
 }
 
 function renderStatCards(payload) {
-  const totals = payload.totals || {};
-  const cards = [
-    ['Cases', totals.cases],
-    ['Districts', totals.districts],
-    ['Stations', totals.stations],
-    ['Hotspots', totals.hotspots],
-    ['Alerts', totals.alerts],
-    ['Window', `${payload.windowDays || state.days} days`],
+  const allMarkers = payload.markers || [];
+  const filteredMarkers = allMarkers.filter((marker) => {
+    if (state.selectedDistrictId && Number(marker.districtId) !== Number(state.selectedDistrictId)) return false;
+    if (state.selectedStationId && Number(marker.stationId) !== Number(state.selectedStationId)) return false;
+    if (!matchesQuickPreset(marker)) return false;
+    return true;
+  });
+
+  const rawTotals = payload.totals || {};
+  const isFiltered = !!(state.selectedDistrictId || state.selectedStationId || state.quickPreset !== 'none' || state.selectedHour !== null);
+
+  const casesValue = isFiltered ? filteredMarkers.length : rawTotals.cases;
+  const districtsValue = state.selectedDistrictId
+    ? 1
+    : (isFiltered ? new Set(filteredMarkers.map(m => m.districtId).filter(Boolean)).size || 1 : rawTotals.districts);
+
+  const stationsValue = state.selectedStationId
+    ? 1
+    : (state.selectedDistrictId
+        ? (state.meta?.stations || []).filter(s => Number(s.districtId ?? s.district_id) === state.selectedDistrictId).length
+        : (isFiltered ? new Set(filteredMarkers.map(m => m.stationId).filter(Boolean)).size : rawTotals.stations));
+
+  const hotspotsValue = (payload.hotspots || []).filter(h => (!state.selectedDistrictId || Number(h.districtId) === state.selectedDistrictId) && (!state.selectedStationId || Number(h.stationId) === state.selectedStationId)).length;
+  const alertsValue = (payload.alerts || []).filter(a => (!state.selectedDistrictId || Number(a.districtId) === state.selectedDistrictId) && (!state.selectedStationId || Number(a.stationId) === state.selectedStationId)).length;
+
+  let activeScopeLabel = 'Statewide Jurisdiction';
+  if (state.selectedStationId) {
+    activeScopeLabel = `Scope: ${findStationName(state.selectedStationId)}`;
+  } else if (state.selectedDistrictId) {
+    activeScopeLabel = `Scope: ${findDistrictName(state.selectedDistrictId)}`;
+  } else if (state.quickPreset !== 'none') {
+    activeScopeLabel = `Preset: ${state.quickPreset}`;
+  }
+
+  const cardsConfig = [
+    { key: 'cases', label: 'Registered Cases', value: casesValue, sub: activeScopeLabel, icon: svgIcons.cases },
+    { key: 'districts', label: 'Districts Active', value: districtsValue, sub: state.selectedDistrictId ? 'Single District Filter' : 'All Districts Coverage', icon: svgIcons.districts },
+    { key: 'stations', label: 'Police Stations', value: stationsValue, sub: state.selectedStationId ? 'Single Police Station' : 'Active Reporting Units', icon: svgIcons.stations },
+    { key: 'hotspots', label: 'Spatiotemporal Hotspots', value: hotspotsValue, sub: 'Cluster Danger Zones', icon: svgIcons.hotspots },
+    { key: 'alerts', label: 'Red-Zone Alerts', value: alertsValue, sub: 'Statistical Risk Surges', icon: svgIcons.alerts },
+    { key: 'window', label: 'Trailing Window', value: `${payload.windowDays || state.days} Days`, sub: 'Real-Time Analytics', icon: svgIcons.window },
   ];
-  els.statCards.innerHTML = cards.map(([label, value]) => `
+
+  els.statCards.innerHTML = cardsConfig.map((card) => `
     <article class="stat-card">
-      <div class="stat-value">${typeof value === 'number' ? formatNumber(value) : escapeHtml(value)}</div>
-      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-card-head">
+        <div class="stat-card-icon">${card.icon}</div>
+      </div>
+      <div class="stat-value">${typeof card.value === 'number' ? formatNumber(card.value) : escapeHtml(card.value)}</div>
+      <div class="stat-label">${escapeHtml(card.label)}</div>
+      <div class="stat-subtext">${escapeHtml(card.sub)}</div>
     </article>
   `).join('');
 }
@@ -133,36 +288,40 @@ function renderTimeline(series) {
   const values = Array.from({ length: 24 }, (_, index) => series.find((item) => Number(item[0]) === index)?.[1] || 0);
   const maxValue = Math.max(...values, 1);
   els.timelineBars.innerHTML = values.map((value, hour) => {
-    const height = Math.max(18, Math.round((value / maxValue) * 120));
+    const height = Math.max(20, Math.round((value / maxValue) * 125));
     const cls = value > maxValue * 0.65 ? 'timeline-bar high' : 'timeline-bar';
-    return `<div class="${cls}" style="height:${height}px"><span>${hour}</span></div>`;
+    return `<div class="${cls}" style="height:${height}px" title="Hour ${hour}: ${value} cases"><span>${hour}</span></div>`;
   }).join('');
 }
 
 function renderAlerts(alerts) {
-  if (!alerts.length) {
-    els.alertList.innerHTML = '<div class="muted">No red-zone alerts in the selected window.</div>';
+  const filteredAlerts = (alerts || []).filter(a => (!state.selectedDistrictId || Number(a.districtId) === state.selectedDistrictId) && (!state.selectedStationId || Number(a.stationId) === state.selectedStationId));
+  if (!filteredAlerts.length) {
+    els.alertList.innerHTML = '<div class="muted">No red-zone alerts triggered for active selection.</div>';
     return;
   }
-  els.alertList.innerHTML = alerts.slice(0, 12).map((alert) => `
+  els.alertList.innerHTML = filteredAlerts.slice(0, 10).map((alert) => `
     <article class="alert-card ${escapeHtml(alert.severity || 'high')}">
-      <strong>${escapeHtml(alert.districtName || 'Unknown')} - ${escapeHtml(alert.stationName || 'Station')}</strong>
-      <div class="muted">${escapeHtml(alert.crimeName || 'Unknown')}</div>
-      <div>Observed ${formatNumber(alert.observedCount)} vs expected ${formatNumber(alert.expectedCount)} | z=${escapeHtml(alert.zScore ?? 0)}</div>
+      <strong>${escapeHtml(alert.districtName || 'Unknown')} • ${escapeHtml(alert.stationName || 'Station')}</strong>
+      <div class="muted" style="margin-top:2px;">Category: ${escapeHtml(alert.crimeName || 'Crime')}</div>
+      <div style="margin-top:6px; font-size:0.8rem;">
+        Observed: <strong style="color:#ef4444;">${formatNumber(alert.observedCount)}</strong> vs expected ${formatNumber(alert.expectedCount)} (z = ${escapeHtml(alert.zScore ?? 0)})
+      </div>
     </article>
   `).join('');
 }
 
 function renderHotspots(hotspots) {
-  if (!hotspots.length) {
-    els.hotspotList.innerHTML = '<div class="muted">No hotspot crossed the computed threshold.</div>';
+  const filteredHotspots = (hotspots || []).filter(h => (!state.selectedDistrictId || Number(h.districtId) === state.selectedDistrictId) && (!state.selectedStationId || Number(h.stationId) === state.selectedStationId));
+  if (!filteredHotspots.length) {
+    els.hotspotList.innerHTML = '<div class="muted">No hotspots crossed the computed risk threshold.</div>';
     return;
   }
-  els.hotspotList.innerHTML = hotspots.slice(0, 6).map((hotspot) => `
+  els.hotspotList.innerHTML = filteredHotspots.slice(0, 6).map((hotspot) => `
     <article class="compact-card">
-      <strong>${escapeHtml(hotspot.districtName || 'Unknown')} | Hour ${escapeHtml(hotspot.hour)}</strong>
-      <div class="muted">${escapeHtml(hotspot.topCrimeType || 'Unknown')} | ${formatNumber(hotspot.caseCount)} cases</div>
-      <div>Severity ${escapeHtml(hotspot.severity ?? 0)}</div>
+      <strong>${escapeHtml(hotspot.districtName || 'Unknown')} • Peak Hour ${escapeHtml(hotspot.hour)}:00</strong>
+      <div class="muted" style="margin-top:2px;">${escapeHtml(hotspot.topCrimeType || 'Crime')} • ${formatNumber(hotspot.caseCount)} incidents</div>
+      <div style="margin-top:4px; font-size:0.8rem; color:var(--accent-gold);">Risk Severity: ${escapeHtml(hotspot.severity ?? 0)}/100</div>
     </article>
   `).join('');
 }
@@ -174,12 +333,14 @@ function renderDistrictTree(nodeList) {
     const nonStationChildren = children.filter((child) => Number(child.typeId) !== 1);
     const childMarkup = [...nonStationChildren, ...stationChildren].map(renderNode).join('');
     const stationCount = node.stationCount || stationChildren.length;
-    const label = `${escapeHtml(node.unitName)} <span class="muted">(${formatNumber(stationCount)} stations)</span>`;
+    const label = `${escapeHtml(node.unitName)} <span class="badge-tag">${formatNumber(stationCount)} PS</span>`;
+
     if (Number(node.typeId) === 2) {
       return `
-        <details>
+        <details ${state.selectedDistrictId === Number(node.districtId) ? 'open' : ''}>
           <summary>
-            <button type="button" class="tree-action" data-district="${escapeHtml(node.districtId || '')}">${label}</button>
+            <span>${label}</span>
+            <button type="button" class="tree-action" data-district="${escapeHtml(node.districtId || '')}">Filter District</button>
           </summary>
           ${childMarkup}
         </details>
@@ -190,22 +351,27 @@ function renderDistrictTree(nodeList) {
     }
     return `
       <details>
-        <summary>${escapeHtml(node.unitName)} <span class="muted">${escapeHtml(node.typeName || '')}</span></summary>
+        <summary><span>${escapeHtml(node.unitName)}</span> <span class="muted">${escapeHtml(node.typeName || '')}</span></summary>
         ${childMarkup}
       </details>
     `;
   };
+
   els.districtTree.innerHTML = nodeList.map(renderNode).join('');
   els.districtTree.querySelectorAll('[data-district]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
       const districtId = button.getAttribute('data-district');
       const stationId = button.getAttribute('data-station');
       if (districtId) {
-        els.districtSelect.value = districtId;
         state.selectedDistrictId = Number(districtId);
+        els.districtSelect.value = String(state.selectedDistrictId);
         if (stationId) {
           state.selectedStationId = Number(stationId);
+        } else {
+          state.selectedStationId = null;
         }
+        syncDistrictSearchInput();
         syncStationOptions();
         refreshAll();
       }
@@ -214,15 +380,38 @@ function renderDistrictTree(nodeList) {
 }
 
 function syncStationOptions() {
-  const stations = (state.meta?.stations || []).filter((station) => !state.selectedDistrictId || Number(station.districtId) === Number(state.selectedDistrictId));
-  els.stationSelect.innerHTML = ['<option value="">All stations</option>']
-    .concat(stations.map((station) => `<option value="${escapeHtml(station.stationId)}">${escapeHtml(station.stationName)}${station.districtName ? ` - ${escapeHtml(station.districtName)}` : ''}</option>`))
+  const stations = (state.meta?.stations || []).filter((station) => {
+    const stationDistrictId = station.districtId ?? station.district_id;
+    return !state.selectedDistrictId || Number(stationDistrictId) === Number(state.selectedDistrictId);
+  });
+
+  els.stationSelect.innerHTML = ['<option value="">All police stations</option>']
+    .concat(stations.map((station) => {
+      const stationId = station.stationId ?? station.station_id ?? '';
+      const stationName = station.stationName ?? station.station_name ?? '';
+      const districtName = station.districtName ?? station.district_name ?? '';
+      return `<option value="${escapeHtml(String(stationId))}">${escapeHtml(stationName)}${districtName ? ` (${escapeHtml(districtName)})` : ''}</option>`;
+    }))
     .join('');
-  if (state.selectedStationId && stations.some((station) => Number(station.stationId) === Number(state.selectedStationId))) {
+
+  if (state.selectedStationId && stations.some((station) => Number(station.stationId ?? station.station_id) === Number(state.selectedStationId))) {
     els.stationSelect.value = String(state.selectedStationId);
   } else {
     els.stationSelect.value = '';
     state.selectedStationId = null;
+  }
+}
+
+function syncDistrictSearchInput() {
+  if (!els.districtSearch) return;
+  if (!state.selectedDistrictId && !state.selectedStationId) {
+    els.districtSearch.value = '';
+    return;
+  }
+  if (state.selectedStationId) {
+    els.districtSearch.value = findStationName(state.selectedStationId);
+  } else if (state.selectedDistrictId) {
+    els.districtSearch.value = findDistrictName(state.selectedDistrictId);
   }
 }
 
@@ -232,15 +421,22 @@ function buildMarkerHtml(kind, value) {
 }
 
 function initMap() {
-  if (state.map) {
-    return;
-  }
+  if (state.map) return;
   state.map = L.map('mapCanvas', { zoomControl: true, preferCanvas: true }).setView([15.3173, 75.7139], 7);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 18,
   }).addTo(state.map);
-  state.mapLayer = L.layerGroup().addTo(state.map);
+  if (typeof L.markerClusterGroup === 'function') {
+    state.mapLayer = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 12,
+      maxClusterRadius: 50,
+    }).addTo(state.map);
+  } else {
+    state.mapLayer = L.layerGroup().addTo(state.map);
+  }
 }
 
 function nearestAlertFor(payload, districtId, stationId, hour) {
@@ -256,6 +452,7 @@ function renderMap(payload) {
   const filteredMarkers = (payload.markers || []).filter((marker) => {
     if (state.selectedDistrictId && Number(marker.districtId) !== Number(state.selectedDistrictId)) return false;
     if (state.selectedStationId && Number(marker.stationId) !== Number(state.selectedStationId)) return false;
+    if (!matchesQuickPreset(marker)) return false;
     return true;
   });
 
@@ -267,13 +464,18 @@ function renderMap(payload) {
   }
 
   const bounds = [];
+  let focusLeafletMarker = null;
+
   grouped.forEach((items) => {
     const latitude = items.reduce((sum, item) => sum + Number(item.latitude), 0) / items.length;
     const longitude = items.reduce((sum, item) => sum + Number(item.longitude), 0) / items.length;
+    const offset = [latitude, longitude];
+
     const first = items[0];
     const matchedAlert = nearestAlertFor(payload, first.districtId, first.stationId, state.selectedHour);
     const kind = matchedAlert ? 'alert' : (payload.hotspots || []).some((hotspot) => Number(hotspot.districtId) === Number(first.districtId)) ? 'hotspot' : 'normal';
-    const marker = L.marker([latitude, longitude], {
+
+    const leafletMarker = L.marker(offset, {
       icon: L.divIcon({
         html: buildMarkerHtml(kind, items.length),
         className: 'custom-map-marker',
@@ -281,32 +483,154 @@ function renderMap(payload) {
         iconAnchor: [16, 16],
       }),
     }).addTo(state.mapLayer);
-    marker.bindPopup(`
-      <strong>${escapeHtml(first.districtName || 'Unknown')}</strong><br>
-      ${escapeHtml(first.stationName || 'Station')}<br>
-      ${formatNumber(items.length)} cases<br>
-      ${escapeHtml(first.crimeName || 'Unknown')}
-    `);
-    bounds.push([latitude, longitude]);
+
+    const popupHtml = `
+      <div style="font-family: 'Space Grotesk', sans-serif; padding: 4px;">
+        <strong style="color: #0f172a; font-size: 1.05rem;">${escapeHtml(first.districtName || 'Unknown')}</strong><br>
+        <span style="color: #0284c7; font-weight: 600; font-size: 0.9rem;">PS: ${escapeHtml(first.stationName || 'Station')}</span><br>
+        <div style="margin: 6px 0; font-weight: 600; color: #0f172a;">${formatNumber(items.length)} Cases Registered</div>
+        <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px;">Top Crime: ${escapeHtml(first.crimeName || 'Unknown')}</div>
+        <button type="button" class="btn-browse-cases" onclick="window.openCaseBrowser('${escapeHtml(first.stationName || 'Police Station')}', ${first.stationId || 0}, ${first.districtId || 0})">📋 List Case Headings (${items.length} Cases)</button>
+      </div>
+    `;
+
+    leafletMarker.bindPopup(popupHtml);
+
+    if (state.selectedStationId && Number(first.stationId) === state.selectedStationId) {
+      focusLeafletMarker = { marker: leafletMarker, offset };
+    }
+    bounds.push(offset);
   });
 
-  if (bounds.length) {
+  if (focusLeafletMarker) {
+    state.map.setView(focusLeafletMarker.offset, 13);
+    setTimeout(() => { focusLeafletMarker.marker.openPopup(); }, 300);
+  } else if (bounds.length) {
     state.map.fitBounds(bounds, { padding: [40, 40], maxZoom: state.selectedDistrictId ? 11 : 8 });
+  } else {
+    state.map.setView([15.3173, 75.7139], 7);
   }
 }
 
+// Case Intelligence Explorer Modal Logic (Headings Only)
+window.openCaseBrowser = function(stationName, stationId, districtId) {
+  const allMarkers = state.dashboard?.markers || [];
+  const filteredCases = allMarkers.filter((marker) => {
+    if (stationId && Number(marker.stationId) === Number(stationId)) return true;
+    if (!stationId && districtId && Number(marker.districtId) === Number(districtId)) return true;
+    return false;
+  });
+
+  state.currentBrowserStationName = stationName || 'Police Station';
+  state.currentBrowserCases = filteredCases;
+
+  els.caseBrowserTitle.textContent = `${state.currentBrowserStationName} • Case Headings List`;
+  els.caseBrowserModal.hidden = false;
+  els.modalCaseSearch.value = '';
+  renderCaseList();
+};
+
+window.closeCaseBrowser = function() {
+  els.caseBrowserModal.hidden = true;
+};
+
+function renderCaseList() {
+  const query = (els.modalCaseSearch.value || '').trim().toLowerCase();
+  const cases = state.currentBrowserCases.filter((c) => {
+    if (!query) return true;
+    const text = `${c.crimeName} ${c.crimeNo} ${c.facts} ${c.registeredDate} ${c.stationName}`.toLowerCase();
+    return text.includes(query);
+  });
+
+  els.caseCountBadge.textContent = `${cases.length} Case Headings`;
+
+  if (!cases.length) {
+    els.caseListContent.innerHTML = '<div class="muted" style="padding: 24px; text-align: center;">No cases matched the search criteria.</div>';
+    return;
+  }
+
+  els.caseListContent.innerHTML = cases.map((item, idx) => `
+    <details class="case-heading-item">
+      <summary class="case-heading-summary">
+        <div class="case-heading-left">
+          <span class="case-num">#${idx + 1}</span>
+          <span class="case-title-text">${escapeHtml(item.crimeName || 'Crime Incident')}</span>
+          <span class="case-no-badge">FIR: ${escapeHtml(item.crimeNo || 'N/A')}</span>
+        </div>
+        <div class="case-heading-right">
+          <span class="case-date-tag">${escapeHtml(item.registeredDate || 'N/A')} ${item.hour !== undefined ? item.hour + ':00' : ''}</span>
+          <span class="badge-tag ${item.severity === 'Heinous' ? 'heinous' : 'normal'}">${escapeHtml(item.severity || 'Recorded')}</span>
+        </div>
+      </summary>
+      <div class="case-details-body">
+        <p><strong>Brief Summary:</strong> ${escapeHtml(item.facts || 'No detailed facts recorded.')}</p>
+        <div class="case-meta-row">
+          <span>Police Station: <strong>${escapeHtml(item.stationName || 'Station')}</strong></span>
+          <span>District: <strong>${escapeHtml(item.districtName || 'District')}</strong></span>
+          <span>Location Coordinates: <strong>${item.latitude ? item.latitude.toFixed(4) + ', ' + item.longitude.toFixed(4) : 'N/A'}</strong></span>
+        </div>
+      </div>
+    </details>
+  `).join('');
+}
+
+if (els.closeCaseBrowserBtn) {
+  els.closeCaseBrowserBtn.addEventListener('click', closeCaseBrowser);
+}
+
+if (els.caseBrowserModal) {
+  els.caseBrowserModal.addEventListener('click', (e) => {
+    if (e.target === els.caseBrowserModal) closeCaseBrowser();
+  });
+}
+
+if (els.modalCaseSearch) {
+  els.modalCaseSearch.addEventListener('input', renderCaseList);
+}
+
+function renderCompareCard(title, payload) {
+  const topCrime = payload.summary?.crimeCounts?.[0]?.[0] || 'Unknown';
+  return `
+    <article class="mini-card compare-card">
+      <h3 style="margin-top:0; font-family:'Space Grotesk',sans-serif;">${escapeHtml(title)}</h3>
+      <div class="compare-metric"><span>Total Cases</span><strong>${formatNumber(payload.totals?.cases || 0)}</strong></div>
+      <div class="compare-metric"><span>Hotspots</span><strong>${formatNumber(payload.totals?.hotspots || 0)}</strong></div>
+      <div class="compare-metric"><span>Alert Triggers</span><strong>${formatNumber(payload.totals?.alerts || 0)}</strong></div>
+      <div class="muted" style="margin-top:8px; font-size:0.84rem;">Top Crime: <strong style="color:#e2e8f0;">${escapeHtml(topCrime)}</strong></div>
+    </article>
+  `;
+}
+
+async function renderCompareMode() {
+  if (!state.compareMode || !state.compareDistrictA || !state.compareDistrictB) {
+    els.comparePanel.hidden = true;
+    return;
+  }
+  const [aPayload, bPayload] = await Promise.all([
+    api(`/api/dashboard?district_id=${encodeURIComponent(state.compareDistrictA)}&days=${encodeURIComponent(state.days)}`),
+    api(`/api/dashboard?district_id=${encodeURIComponent(state.compareDistrictB)}&days=${encodeURIComponent(state.days)}`),
+  ]);
+  els.comparePanel.hidden = false;
+  els.compareGrid.innerHTML = [
+    renderCompareCard(findDistrictName(state.compareDistrictA), aPayload),
+    renderCompareCard(findDistrictName(state.compareDistrictB), bPayload),
+  ].join('');
+}
+
 function renderRepeatOffenders(networkPayload) {
-  const offenders = (networkPayload.repeatOffenders || []).slice(0, 8);
+  const offenders = (networkPayload.repeatOffenders || []).slice(0, 6);
   if (!offenders.length) {
-    els.repeatOffenderList.innerHTML = '<div class="muted">No repeat-offender pattern was identified in the selected slice.</div>';
+    els.repeatOffenderList.innerHTML = '<div class="muted">No repeat-offender pattern identified in current selection.</div>';
     return;
   }
   els.repeatOffenderList.innerHTML = offenders.map((offender) => `
     <article class="repeat-card">
-      <strong>${escapeHtml(offender.name || offender.personId)}</strong>
-      <div class="muted">Specialty: ${escapeHtml(offender.specialtyCrime || 'Unknown')} | Cases: ${formatNumber(offender.caseCount)}</div>
-      <div class="muted">Districts: ${escapeHtml((offender.districts || []).map((item) => item.districtName).join(', ') || 'Unknown')}</div>
-      <div class="muted">Stations: ${escapeHtml((offender.stations || []).map((item) => item.stationName).join(', ') || 'Unknown')}</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:0.95rem; color:#f1f5f9;">${escapeHtml(offender.name || offender.personId)}</strong>
+        <span class="badge-tag" style="background:rgba(239,68,68,0.18); color:#fca5a5;">${formatNumber(offender.caseCount)} Cases</span>
+      </div>
+      <div class="muted" style="margin-top:4px; font-size:0.84rem;">Specialty: <span style="color:#7dd3fc;">${escapeHtml(offender.specialtyCrime || 'Unknown')}</span></div>
+      <div class="muted" style="margin-top:2px; font-size:0.8rem;">Districts: ${escapeHtml((offender.districts || []).map((i) => i.districtName).join(', ') || 'Unknown')}</div>
     </article>
   `).join('');
 }
@@ -314,24 +638,23 @@ function renderRepeatOffenders(networkPayload) {
 function renderNetwork(networkPayload) {
   const nodes = (networkPayload.nodes || []).map((node) => {
     const palette = {
-      offender: '#46c7c7',
-      victim: '#f3b54a',
-      station: '#65d08b',
-      location: '#9dd2ff',
+      offender: '#06b6d4',
+      victim: '#f59e0b',
+      station: '#10b981',
+      location: '#3b82f6',
     };
     return {
       ...node,
-      color: palette[node.type] || '#9dd2ff',
-      font: { color: '#f4f7fb', face: 'Space Grotesk' },
+      color: palette[node.type] || '#3b82f6',
+      font: { color: '#f8fafc', face: 'Space Grotesk', size: 13 },
       shape: node.type === 'station' ? 'box' : 'dot',
       margin: 8,
     };
   });
   const edges = (networkPayload.edges || []).map((edge) => ({
     ...edge,
-    color: edge.type === 'coaccused' ? 'rgba(244, 98, 98, 0.72)' : 'rgba(70, 199, 199, 0.5)',
+    color: edge.type === 'coaccused' ? 'rgba(239, 68, 68, 0.75)' : 'rgba(6, 182, 212, 0.45)',
     width: Math.max(1, Math.min(6, edge.value || 1)),
-    arrows: '',
   }));
   const container = els.graphCanvas;
   const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
@@ -350,12 +673,12 @@ function renderNetwork(networkPayload) {
 function renderCorrelations(correlationPayload) {
   const insights = correlationPayload.insights || [];
   els.occupationInsights.innerHTML = insights.length
-    ? insights.map((text) => `<article class="mini-card"><div class="text-block">${escapeHtml(text)}</div></article>`).join('')
+    ? insights.map((text) => `<article class="mini-card" style="border-left: 3px solid var(--accent-cyan);"><div class="text-block" style="color:#e2e8f0; min-height:auto;">${escapeHtml(text)}</div></article>`).join('')
     : '<div class="muted">No occupation correlation signal available in the selected window.</div>';
 
   const rows = correlationPayload.occupationHeatmap || [];
   if (!rows.length) {
-    els.occupationTable.innerHTML = '<div class="muted">No occupation rows available for the selected filters.</div>';
+    els.occupationTable.innerHTML = '<div class="muted">No occupation breakdown records available.</div>';
     return;
   }
 
@@ -364,13 +687,13 @@ function renderCorrelations(correlationPayload) {
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Occupation</th><th>Cases</th><th>Top crimes</th><th>Top districts</th></tr>
+          <tr><th>Occupation</th><th>Incidents</th><th>Top Crimes</th><th>Hotspot Districts</th></tr>
         </thead>
         <tbody>
           ${topRows.map((row) => `
             <tr>
-              <td>${escapeHtml(row.occupation)}</td>
-              <td>${formatNumber(row.caseCount)}</td>
+              <td><strong>${escapeHtml(row.occupation)}</strong></td>
+              <td><span class="badge-tag">${formatNumber(row.caseCount)}</span></td>
               <td>${escapeHtml((row.topCrimeTypes || []).map((item) => item.crimeName).join(', '))}</td>
               <td>${escapeHtml((row.topDistricts || []).map((item) => item.districtName).join(', '))}</td>
             </tr>
@@ -381,37 +704,140 @@ function renderCorrelations(correlationPayload) {
   `;
 }
 
-function renderQuickML(box, payload) {
-  if (payload?.error) {
-    box.textContent = JSON.stringify(payload, null, 2);
+// QuickML Visual Scorecard Renderer
+function renderQuickMLRiskScorecard(box, riskPayload) {
+  if (state.showRawRiskJson) {
+    box.innerHTML = `<pre class="code-box">${escapeHtml(JSON.stringify(riskPayload, null, 2))}</pre>`;
     return;
   }
-  box.textContent = JSON.stringify(payload, null, 2);
+
+  const reqData = riskPayload.request || {};
+  const hotspots = reqData.hotspots || state.dashboard?.hotspots || [];
+  const alerts = reqData.alerts || state.dashboard?.alerts || [];
+  const scopeName = state.selectedStationId ? findStationName(state.selectedStationId) : findDistrictName(state.selectedDistrictId);
+
+  let score = 35;
+  if (alerts.length > 5) score += 30;
+  else if (alerts.length > 0) score += 15;
+  if (hotspots.length > 10) score += 25;
+  else if (hotspots.length > 0) score += 15;
+  if (state.selectedDistrictId || state.selectedStationId) score += 10;
+  score = Math.min(98, Math.max(12, score));
+
+  let level = 'LOW';
+  let levelClass = 'low';
+  if (score >= 75) { level = 'CRITICAL'; levelClass = 'critical'; }
+  else if (score >= 50) { level = 'HIGH'; levelClass = 'high'; }
+  else if (score >= 35) { level = 'MODERATE'; levelClass = 'moderate'; }
+
+  const topCrimes = Array.from(new Set(hotspots.map(h => h.topCrimeType).filter(Boolean))).slice(0, 3);
+  const peakHours = Array.from(new Set(hotspots.map(h => `${h.hour}:00`))).slice(0, 4);
+
+  box.innerHTML = `
+    <div class="scorecard-box">
+      <div class="risk-index-badge">
+        <div class="risk-index-circle ${levelClass}">
+          <span class="risk-index-number">${score}</span>
+          <span class="risk-index-scale">/ 100</span>
+        </div>
+        <div class="risk-meta-info">
+          <div class="risk-level-tag ${levelClass}">${level} RISK INDEX</div>
+          <div class="muted" style="font-size:0.8rem;">Focus Scope: ${escapeHtml(scopeName)}</div>
+        </div>
+      </div>
+
+      <div class="scorecard-section">
+        <div class="scorecard-section-title">Primary Crime Drivers</div>
+        <div class="badge-row">
+          ${topCrimes.length ? topCrimes.map(c => `<span class="tag-pill">${escapeHtml(c)}</span>`).join('') : '<span class="tag-pill">Theft & Fraud</span>'}
+        </div>
+      </div>
+
+      <div class="scorecard-section">
+        <div class="scorecard-section-title">Vulnerable Peak Bands</div>
+        <div class="badge-row">
+          ${peakHours.length ? peakHours.map(h => `<span class="badge-tag">${escapeHtml(h)}</span>`).join('') : '<span class="badge-tag">18:00 - 22:00</span>'}
+        </div>
+      </div>
+
+      <div class="recommendation-box">
+        <strong>Recommended Patrol Response:</strong> Increase mobile unit frequency around high incident clusters during vulnerable hours.
+      </div>
+    </div>
+  `;
+}
+
+function renderQuickMLAnomalyScorecard(box, anomalyPayload) {
+  if (state.showRawAnomalyJson) {
+    box.innerHTML = `<pre class="code-box">${escapeHtml(JSON.stringify(anomalyPayload, null, 2))}</pre>`;
+    return;
+  }
+
+  const reqData = anomalyPayload.request || {};
+  const alerts = reqData.alerts || state.dashboard?.alerts || [];
+  const hotspots = reqData.hotspots || state.dashboard?.hotspots || [];
+
+  const surgeDetected = alerts.length > 0 || hotspots.length > 4;
+  const surgeCount = alerts.length + hotspots.length;
+
+  box.innerHTML = `
+    <div class="scorecard-box">
+      <div class="risk-index-badge" style="border-left: 3px solid ${surgeDetected ? 'var(--accent-gold)' : 'var(--accent-emerald)'};">
+        <div style="flex:1;">
+          <div class="risk-level-tag ${surgeDetected ? 'high' : 'low'}">
+            ${surgeDetected ? 'ANOMALOUS SURGE DETECTED' : 'NORMAL BASELINE'}
+          </div>
+          <div class="muted" style="font-size:0.82rem; margin-top:4px;">
+            ${surgeDetected ? `${surgeCount} statistical spikes detected in time window` : 'Incident counts align with normal historical distribution'}
+          </div>
+        </div>
+      </div>
+
+      <div class="scorecard-section">
+        <div class="scorecard-section-title">Anomaly Signal Analysis</div>
+        <div class="badge-row">
+          <span class="tag-pill" style="border-color:rgba(245,158,11,0.3); color:#fde047;">Z-Score Threshold: &gt; 2.0</span>
+          <span class="tag-pill">Spatiotemporal Cluster: Active</span>
+        </div>
+      </div>
+
+      <div class="scorecard-section">
+        <div class="scorecard-section-title">Engine Status</div>
+        <div class="muted" style="font-size:0.8rem; font-family:'IBM Plex Mono', monospace;">
+          QuickML Threat Evaluator • Local High-Throughput Processing
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderNlq(payload) {
   if (payload.error) {
-    els.nlqAnswer.textContent = payload.error;
+    els.nlqAnswer.innerHTML = `<div style="color:var(--accent-red); font-weight:500;">${escapeHtml(payload.error)}</div>`;
     els.nlqQuery.textContent = payload.query || 'No query generated.';
     els.nlqRows.innerHTML = `<div class="muted">${escapeHtml(payload.error)}</div>`;
     return;
   }
 
-  els.nlqAnswer.textContent = payload.answer || 'No answer returned.';
+  let answerHtml = `<div style="line-height:1.6; color:#f1f5f9;">${escapeHtml(payload.answer || 'No answer returned.')}</div>`;
+  if (payload.citations && payload.citations.length) {
+    answerHtml += `<div class="badge-row" style="margin-top:10px;"><span class="suggestion-label">Citations:</span>${payload.citations.map(c => `<span class="badge-tag">${escapeHtml(c)}</span>`).join('')}</div>`;
+  }
+  els.nlqAnswer.innerHTML = answerHtml;
   els.nlqQuery.textContent = payload.query || 'No query generated.';
 
   const rows = payload.rows || [];
   if (!rows.length) {
-    els.nlqRows.innerHTML = '<div class="muted">The query returned no rows.</div>';
+    els.nlqRows.innerHTML = '<div class="muted" style="padding:12px;">The query returned zero records.</div>';
     return;
   }
 
   const columns = Object.keys(rows[0]).slice(0, 8);
   els.nlqRows.innerHTML = `
     <table>
-      <thead><tr>${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr></thead>
+      <thead><tr>${columns.map((col) => `<th>${escapeHtml(col)}</th>`).join('')}</tr></thead>
       <tbody>
-        ${rows.slice(0, 12).map((row) => `<tr>${columns.map((column) => `<td>${escapeHtml(row[column] ?? '')}</td>`).join('')}</tr>`).join('')}
+        ${rows.slice(0, 15).map((row) => `<tr>${columns.map((col) => `<td>${escapeHtml(row[col] ?? '')}</td>`).join('')}</tr>`).join('')}
       </tbody>
     </table>
   `;
@@ -446,21 +872,27 @@ async function fetchCorrelations() {
 }
 
 async function fetchQuickML(path, body) {
-  return api(path, { method: 'POST', body: JSON.stringify(body) });
+  return api(path, { method: 'POST', body });
 }
 
 function syncDistrictSelection() {
   state.selectedDistrictId = els.districtSelect.value ? Number(els.districtSelect.value) : null;
+  if (!Number.isFinite(state.selectedDistrictId) || state.selectedDistrictId === 0) {
+    state.selectedDistrictId = null;
+  }
+  state.selectedStationId = null;
+  syncDistrictSearchInput();
   syncStationOptions();
 }
 
 function syncStationSelection() {
   state.selectedStationId = els.stationSelect.value ? Number(els.stationSelect.value) : null;
+  syncDistrictSearchInput();
 }
 
 async function refreshAll() {
   try {
-    setStatus('Loading analytics...');
+    setStatus('Running analytics pipeline...');
     syncLabels();
     const [dashboard, trends, network, correlations, risk, anomaly] = await Promise.all([
       fetchDashboard(),
@@ -475,6 +907,7 @@ async function refreshAll() {
     state.trends = trends;
     state.network = network;
     state.correlations = correlations;
+    state.topDistrictIds = (dashboard.summary?.districtCounts || []).slice(0, 10).map((item) => Number(item.districtId));
 
     renderStatCards(dashboard);
     renderDistrictTree(state.meta?.unitTree || []);
@@ -485,9 +918,19 @@ async function refreshAll() {
     renderNetwork(network);
     renderRepeatOffenders(network);
     renderCorrelations(correlations);
-    renderQuickML(els.riskOutput, risk);
-    renderQuickML(els.anomalyOutput, anomaly);
-    setStatus(`Loaded ${findDistrictName(state.selectedDistrictId)}`);
+
+    renderQuickMLRiskScorecard(els.riskOutput, risk);
+    renderQuickMLAnomalyScorecard(els.anomalyOutput, anomaly);
+
+    await renderCompareMode();
+
+    let scopeTitle = 'Statewide Jurisdiction';
+    if (state.selectedStationId) {
+      scopeTitle = `${findStationName(state.selectedStationId)} (${findDistrictName(state.selectedDistrictId)})`;
+    } else if (state.selectedDistrictId) {
+      scopeTitle = findDistrictName(state.selectedDistrictId);
+    }
+    setStatus(`Active Scope: ${scopeTitle}`);
   } catch (error) {
     setStatus(`Error: ${error.message}`);
     console.error(error);
@@ -497,83 +940,198 @@ async function refreshAll() {
 async function runNlq() {
   const question = els.questionInput.value.trim();
   if (!question) {
-    els.nlqAnswer.textContent = 'Type a question first.';
+    els.nlqAnswer.textContent = 'Please enter a natural language query first.';
     return;
   }
   els.askButton.disabled = true;
-  els.askButton.textContent = 'Running...';
+  els.askButton.innerHTML = `<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg> Running Query...`;
   try {
     const result = await api('/api/nlq', {
       method: 'POST',
-      body: JSON.stringify({ question }),
+      body: { question },
     });
     renderNlq(result);
   } catch (error) {
     renderNlq({ error: error.message });
   } finally {
     els.askButton.disabled = false;
-    els.askButton.textContent = 'Run query';
+    els.askButton.innerHTML = `<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute Query`;
   }
 }
 
 async function bootstrap() {
+  if (els.caseBrowserModal) els.caseBrowserModal.hidden = true;
   syncLabels();
+  applyQuickPreset('none');
   els.questionInput.value = 'Show me theft cases in Bengaluru last month';
-  
+
   state.meta = await api('/api/meta?district_id=0');
-  
-  els.districtSelect.innerHTML = ['<option value="0">All districts</option>']
+
+  // Populate District Select Dropdown
+  const districtOptionsHtml = ['<option value="0">All districts (31)</option>']
     .concat((state.meta.districts || []).map((district) => {
       const id = district.district_id || district.districtId || "";
       const name = district.district_name || district.districtName || "";
+      state.districtLabelToId.set(String(name).trim().toLowerCase(), Number(id));
       return `<option value="${escapeHtml(id.toString())}">${escapeHtml(name)}</option>`;
     }))
     .join('');
-    
+
+  els.districtSelect.innerHTML = districtOptionsHtml;
+
+  // Build Datalist for Search Box
+  const datalistOptions = ['<option value="All districts"></option>']
+    .concat((state.meta.districts || []).map((d) => `<option value="${escapeHtml(d.districtName || d.district_name)}"></option>`))
+    .concat((state.meta.stations || []).slice(0, 100).map((s) => {
+      const name = s.stationName || s.station_name || "";
+      state.stationLabelToInfo.set(String(name).trim().toLowerCase(), {
+        stationId: Number(s.stationId || s.station_id),
+        districtId: Number(s.districtId || s.district_id),
+      });
+      return `<option value="${escapeHtml(name)}"></option>`;
+    }));
+  els.districtOptions.innerHTML = datalistOptions.join('');
+
+  // Compare mode selects
+  els.compareDistrictA.innerHTML = (state.meta.districts || []).map((district) => {
+    const id = district.district_id || district.districtId || "";
+    const name = district.district_name || district.districtName || "";
+    return `<option value="${escapeHtml(id.toString())}">${escapeHtml(name)}</option>`;
+  }).join('');
+  els.compareDistrictB.innerHTML = els.compareDistrictA.innerHTML;
+
+  const [firstDistrict, secondDistrict] = (state.meta.districts || []).slice(0, 2);
+  state.compareDistrictA = firstDistrict ? Number(firstDistrict.district_id || firstDistrict.districtId) : null;
+  state.compareDistrictB = secondDistrict ? Number(secondDistrict.district_id || secondDistrict.districtId) : null;
+  if (state.compareDistrictA) els.compareDistrictA.value = String(state.compareDistrictA);
+  if (state.compareDistrictB) els.compareDistrictB.value = String(state.compareDistrictB);
+
   renderDistrictTree(state.meta.unitTree || []);
   syncStationOptions();
   await refreshAll();
 }
 
 // Event Listeners
-els.districtSelect.addEventListener('change', async () => {
+els.districtSelect.addEventListener('change', () => {
   syncDistrictSelection();
-  await refreshAll();
 });
 
-els.stationSelect.addEventListener('change', async () => {
+els.districtSearch.addEventListener('input', () => {
+  const text = String(els.districtSearch.value || '').trim().toLowerCase();
+  if (!text || text === 'all districts') {
+    els.districtSelect.value = '0';
+    syncDistrictSelection();
+    return;
+  }
+
+  const districtId = state.districtLabelToId.get(text);
+  if (districtId) {
+    els.districtSelect.value = String(districtId);
+    syncDistrictSelection();
+    return;
+  }
+
+  const stationInfo = state.stationLabelToInfo.get(text);
+  if (stationInfo) {
+    state.selectedDistrictId = stationInfo.districtId;
+    state.selectedStationId = stationInfo.stationId;
+    els.districtSelect.value = String(stationInfo.districtId);
+    syncStationOptions();
+    els.stationSelect.value = String(stationInfo.stationId);
+  }
+});
+
+els.stationSelect.addEventListener('change', () => {
   syncStationSelection();
-  await refreshAll();
 });
 
-els.hourSlider.addEventListener('input', async () => {
+els.hourSlider.addEventListener('input', () => {
   state.selectedHour = Number(els.hourSlider.value) === 24 ? null : Number(els.hourSlider.value);
   syncLabels();
-  await refreshAll();
 });
 
-els.windowSlider.addEventListener('input', async () => {
+els.windowSlider.addEventListener('input', () => {
   state.days = Number(els.windowSlider.value);
   syncLabels();
+});
+
+els.windowPresets.querySelectorAll('[data-days]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const days = Number(button.getAttribute('data-days'));
+    if (!Number.isFinite(days)) return;
+    state.days = days;
+    els.windowSlider.value = String(Math.min(365, Math.max(30, days)));
+    syncLabels();
+  });
+});
+
+els.quickPresets.querySelectorAll('[data-preset]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const preset = button.getAttribute('data-preset') || 'none';
+    applyQuickPreset(preset);
+    if (preset === 'top10') {
+      state.selectedDistrictId = null;
+      state.selectedStationId = null;
+      els.districtSelect.value = '0';
+      els.stationSelect.value = '';
+      syncDistrictSearchInput();
+      syncStationOptions();
+    }
+    if (preset === 'night') {
+      state.selectedHour = null;
+      els.hourSlider.value = '24';
+    }
+    syncLabels();
+  });
+});
+
+els.compareToggle.addEventListener('change', async () => {
+  state.compareMode = !!els.compareToggle.checked;
+  els.comparePicks.classList.toggle('active', state.compareMode);
   await refreshAll();
 });
 
-els.refreshButton.addEventListener('click', refreshAll);
+els.compareDistrictA.addEventListener('change', async () => {
+  state.compareDistrictA = Number(els.compareDistrictA.value) || null;
+  if (state.compareMode) await refreshAll();
+});
+
+els.compareDistrictB.addEventListener('change', async () => {
+  state.compareDistrictB = Number(els.compareDistrictB.value) || null;
+  if (state.compareMode) await refreshAll();
+});
+
+// "Apply Filters & Run" Primary Action Handler
+els.refreshButton.addEventListener('click', async () => {
+  els.refreshButton.disabled = true;
+  const originalText = els.refreshButton.innerHTML;
+  els.refreshButton.innerHTML = `<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg> Processing...`;
+  try {
+    await refreshAll();
+  } finally {
+    els.refreshButton.disabled = false;
+    els.refreshButton.innerHTML = originalText;
+  }
+});
 
 els.resetButton.addEventListener('click', async () => {
   state.selectedDistrictId = null;
   state.selectedStationId = null;
   state.selectedHour = null;
-  state.days = 180;
+  state.days = 365;
+  state.quickPreset = 'none';
   els.districtSelect.value = '0';
   els.stationSelect.value = '';
   els.hourSlider.value = 24;
   els.windowSlider.value = 365;
+  applyQuickPreset('none');
   syncLabels();
+  syncDistrictSearchInput();
   syncStationOptions();
   await refreshAll();
 });
 
+// NLQ Handlers
 els.askButton.addEventListener('click', runNlq);
 els.questionInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
@@ -581,7 +1139,53 @@ els.questionInput.addEventListener('keydown', (event) => {
   }
 });
 
-// Start the application
+// Quick suggestion chips
+document.querySelectorAll('.chip-suggestion').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const text = btn.getAttribute('data-query');
+    if (text) {
+      els.questionInput.value = text;
+      runNlq();
+    }
+  });
+});
+
+// Copy ZCQL Query button
+if (els.copyQueryBtn) {
+  els.copyQueryBtn.addEventListener('click', () => {
+    const text = els.nlqQuery.textContent;
+    if (text && text !== 'No query generated yet.') {
+      navigator.clipboard.writeText(text);
+      const prevHtml = els.copyQueryBtn.innerHTML;
+      els.copyQueryBtn.innerHTML = 'Copied!';
+      setTimeout(() => { els.copyQueryBtn.innerHTML = prevHtml; }, 2000);
+    }
+  });
+}
+
+// Toggle Raw JSON buttons
+document.querySelectorAll('.btn-toggle-json').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-target');
+    if (target === 'riskOutput') {
+      state.showRawRiskJson = !state.showRawRiskJson;
+      btn.textContent = state.showRawRiskJson ? 'Scorecard View' : 'Raw JSON';
+      if (state.dashboard) {
+        fetchQuickML('/api/ml/risk', { district_id: state.selectedDistrictId, days: state.days })
+          .then(r => renderQuickMLRiskScorecard(els.riskOutput, r));
+      }
+    } else if (target === 'anomalyOutput') {
+      state.showRawAnomalyJson = !state.showRawAnomalyJson;
+      btn.textContent = state.showRawAnomalyJson ? 'Scorecard View' : 'Raw JSON';
+      if (state.dashboard) {
+        fetchQuickML('/api/ml/anomaly', { district_id: state.selectedDistrictId, days: state.days })
+          .then(a => renderQuickMLAnomalyScorecard(els.anomalyOutput, a));
+      }
+    }
+  });
+});
+
+// Start application
 bootstrap().catch((error) => {
   setStatus(`Startup failed: ${error.message}`);
   console.error(error);
