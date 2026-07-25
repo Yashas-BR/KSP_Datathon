@@ -55,6 +55,81 @@ button, select, textarea, input {
   border: 0;
 }
 
+/* ─── Top Navigation Bar ─── */
+.topnav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: 56px;
+  background: rgba(7, 10, 18, 0.82);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center;
+}
+.topnav-inner {
+  width: min(1600px, calc(100vw - 36px));
+  margin: 0 auto;
+  display: flex; align-items: center; gap: 0;
+}
+.nav-brand {
+  display: inline-flex; align-items: center; gap: 9px;
+  text-decoration: none; color: #f8fafc;
+  font: 700 0.95rem/1 "Space Grotesk", sans-serif;
+  padding-right: 32px;
+  border-right: 1px solid rgba(148, 163, 184, 0.14);
+  margin-right: 24px;
+  flex-shrink: 0;
+}
+.nav-brand svg { width: 22px; height: 22px; color: #06b6d4; }
+.nav-brand-abbr {
+  font: 700 0.72rem/1 "IBM Plex Mono", monospace;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #06b6d4;
+}
+.nav-links {
+  display: flex; align-items: center; gap: 2px;
+  flex: 1;
+}
+.nav-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: 8px;
+  color: #94a3b8; font: 500 0.84rem/1 "Inter", sans-serif;
+  text-decoration: none;
+  transition: color .18s, background .18s;
+  white-space: nowrap;
+}
+.nav-link svg { width: 15px; height: 15px; flex-shrink: 0; opacity: .7; }
+.nav-link:hover { color: #f8fafc; background: rgba(255,255,255,.07); }
+.nav-link.active {
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+  font-weight: 600;
+}
+.nav-link.active svg { opacity: 1; }
+.nav-divider {
+  width: 1px; height: 20px;
+  background: rgba(148,163,184,.14);
+  margin: 0 8px; flex-shrink: 0;
+}
+.nav-badge {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  font: 600 0.68rem/1 "IBM Plex Mono", monospace;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #10b981;
+}
+.nav-badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #10b981; box-shadow: 0 0 8px #10b981;
+  animation: pulse-nav 2s infinite;
+}
+@keyframes pulse-nav {
+  0%,100% { transform: scale(.9); opacity: .8; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+/* Push page content below fixed navbar */
+body { padding-top: 56px; }
+
 .shell {
   position: relative;
   z-index: 1;

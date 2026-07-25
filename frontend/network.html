@@ -195,6 +195,24 @@
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.2);border-radius:4px}
+
+    /* ── Navbar (self-contained for network.html) ── */
+    .topnav{position:fixed;top:0;left:0;right:0;z-index:1000;height:56px;background:rgba(7,10,18,.85);border-bottom:1px solid rgba(148,163,184,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;}
+    .topnav-inner{width:min(1680px,calc(100vw - 32px));margin:0 auto;display:flex;align-items:center;}
+    .nav-brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#f8fafc;font:700 .95rem/1 "Space Grotesk",sans-serif;padding-right:28px;border-right:1px solid rgba(148,163,184,.14);margin-right:20px;flex-shrink:0;}
+    .nav-brand svg{width:20px;height:20px;color:#06b6d4;}
+    .nav-brand-abbr{font:700 .68rem/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:#06b6d4;}
+    .nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+    .nav-link{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:8px;color:#94a3b8;font:500 .83rem/1 "Inter",sans-serif;text-decoration:none;transition:color .18s,background .18s;white-space:nowrap;}
+    .nav-link svg{width:14px;height:14px;flex-shrink:0;opacity:.7;}
+    .nav-link:hover{color:#f8fafc;background:rgba(255,255,255,.07);}
+    .nav-link.active{color:#06b6d4;background:rgba(6,182,212,.1);font-weight:600;}
+    .nav-link.active svg{opacity:1;}
+    .nav-divider-v{width:1px;height:18px;background:rgba(148,163,184,.14);margin:0 6px;flex-shrink:0;}
+    .nav-badge{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font:600 .67rem/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:#10b981;}
+    .nav-badge-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:pulse-nav 2s infinite;}
+    @keyframes pulse-nav{0%,100%{transform:scale(.9);opacity:.8;}50%{transform:scale(1.2);opacity:1;}}
+    body{padding-top:56px;}
   </style>
 </head>
 <body>
@@ -202,15 +220,45 @@
   <div class="orb orb-b"></div>
   <div class="orb orb-c"></div>
 
+  <!-- ── Top Navigation ── -->
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="/" class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>KSP Analytics</span>
+        <span class="nav-brand-abbr">Platform</span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="/assets/network.html" class="nav-link active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Network Analysis
+        </a>
+        <div class="nav-divider-v"></div>
+        <a href="#graphPanel" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2"/></svg>
+          Graph
+        </a>
+        <a href="#assocPanel" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Associations
+        </a>
+      </div>
+      <div class="nav-badge">
+        <span class="nav-badge-dot"></span>
+        Live
+      </div>
+    </div>
+  </nav>
+
   <div class="shell">
 
     <!-- HERO -->
     <header class="hero card">
       <div class="hero-left">
-        <a href="/" class="back-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          Back to Dashboard
-        </a>
         <div class="header-pill">
           <span class="live-dot"></span>
           <span class="eyebrow">Karnataka State Police &middot; Datathon 2026</span>
