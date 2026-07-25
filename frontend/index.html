@@ -51,6 +51,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 0 1 5.3-7.46"/><path d="M20.95 13a9 9 0 0 1-5.3 7.46"/></svg>
           Intelligence Hub
         </a>
+        <a href="#districtDrilldown" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          District Map
+        </a>
       </div>
       <div class="nav-badge">
         <span class="nav-badge-dot"></span>
@@ -155,14 +159,25 @@
         <div class="panel-head">
           <div>
             <p class="panel-kicker">Spatial Intelligence Map</p>
-            <h2>State, District & Station Crime Geographic Density</h2>
+            <h2>State, District &amp; Station Crime Geographic Density</h2>
           </div>
-          <div id="statusText" class="status-pill"><span class="pulse-icon"></span> Syncing dataset...</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button id="mapViewToggle" class="map-view-toggle" title="Toggle between Heatmap and Marker view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              Heatmap
+            </button>
+            <div id="statusText" class="status-pill"><span class="pulse-icon"></span> Syncing dataset...</div>
+          </div>
         </div>
         <div id="mapCanvas" class="map-canvas"></div>
+        <div id="heatmapLegend" class="heatmap-legend" hidden>
+          <span class="legend-label">Low</span>
+          <div class="legend-gradient"></div>
+          <span class="legend-label">High Crime Rate</span>
+        </div>
         <div class="map-foot">
           <div>
-            <p class="foot-label">Hierarchy & Station Drill-Down</p>
+            <p class="foot-label">Hierarchy &amp; Station Drill-Down</p>
             <div id="districtTree" class="district-tree"></div>
           </div>
           <div>
@@ -375,6 +390,88 @@
 
       </div>
     </section>
+
+    <!-- ── District-Level Drill-Down Interactive Map ── -->
+    <section class="card ddmap-panel" id="districtDrilldown">
+      <div class="panel-head">
+        <div>
+          <p class="panel-kicker">Spatial Crime Intelligence</p>
+          <h2>District-Level Drill-Down &amp; Station Pattern Map</h2>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="chip chip-info">
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            Click District → Drill into Stations
+          </div>
+          <div id="ddmapStatus" class="status-pill" style="font-size:0.78rem;">
+            <span class="pulse-icon"></span> Loading map data...
+          </div>
+          <button id="ddmapResetBtn" class="secondary tiny" title="Reset to statewide view" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset View
+          </button>
+        </div>
+      </div>
+
+      <!-- Window Selector -->
+      <div class="ddmap-controls">
+        <div class="control-group" style="flex:0 0 auto;">
+          <label for="ddmapWindowSelect">Analysis Window</label>
+          <select id="ddmapWindowSelect">
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="180">Last 180 Days</option>
+            <option value="365" selected>Last 365 Days</option>
+          </select>
+        </div>
+        <div class="ddmap-breadcrumb" id="ddmapBreadcrumb">
+          <span class="ddmap-bc-item active">Karnataka State</span>
+        </div>
+      </div>
+
+      <div class="ddmap-workspace">
+        <!-- Left: Interactive Map -->
+        <div class="ddmap-map-wrap">
+          <div id="ddmapCanvas" class="ddmap-canvas"></div>
+          <!-- District colour scale legend -->
+          <div class="ddmap-legend">
+            <span class="ddmap-legend-label">Low</span>
+            <div class="ddmap-legend-gradient"></div>
+            <span class="ddmap-legend-label">High Crime</span>
+          </div>
+        </div>
+
+        <!-- Right: Rank List + Detail Panel -->
+        <aside class="ddmap-aside">
+          <!-- District Rank List -->
+          <div class="ddmap-rank-panel" id="ddmapRankPanel">
+            <div class="ddmap-rank-head">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--accent-gold)"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>
+              <span>District Crime Ranking</span>
+            </div>
+            <div id="ddmapDistrictList" class="ddmap-rank-list"></div>
+          </div>
+
+          <!-- Station Detail Panel (shown when a district is drilled into) -->
+          <div class="ddmap-station-panel" id="ddmapStationPanel" hidden>
+            <div class="ddmap-rank-head">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--accent-cyan)"><path d="M3 21h18M3 7v14M21 7v14M6 21V10M18 21V10M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M12 3L2 7h20L12 3z"/></svg>
+              <span id="ddmapStationPanelTitle">Station Breakdown</span>
+            </div>
+            <div id="ddmapStationList" class="ddmap-rank-list"></div>
+          </div>
+
+          <!-- Crime Type Breakdown -->
+          <div class="ddmap-crime-panel" id="ddmapCrimePanel">
+            <div class="ddmap-rank-head">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--accent-red)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Crime Type Distribution</span>
+            </div>
+            <div id="ddmapCrimeList" class="ddmap-crime-bars"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
   </div>
   
   <!-- Interactive Case Browser Modal -->
@@ -412,6 +509,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <script src="/assets/app.js"></script>
 </body>

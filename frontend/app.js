@@ -18,6 +18,8 @@ const state = {
   compareDistrictB: null,
   map: null,
   mapLayer: null,
+  heatLayer: null,
+  mapViewMode: 'markers', // 'markers' | 'heatmap'
   graph: null,
   showRawRiskJson: false,
   showRawAnomalyJson: false,
@@ -430,10 +432,19 @@ function buildMarkerHtml(kind, value) {
 function initMap() {
   if (state.map) return;
   state.map = L.map('mapCanvas', { zoomControl: true, preferCanvas: true }).setView([15.3173, 75.7139], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+  // Base tile layers
+  state._lightTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 18,
-  }).addTo(state.map);
+  });
+  state._darkTile = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &amp; CARTO',
+    maxZoom: 18,
+  });
+  state._lightTile.addTo(state.map);
+
+  // Marker cluster layer
   if (typeof L.markerClusterGroup === 'function') {
     state.mapLayer = L.markerClusterGroup({
       showCoverageOnHover: false,
@@ -443,6 +454,47 @@ function initMap() {
     }).addTo(state.map);
   } else {
     state.mapLayer = L.layerGroup().addTo(state.map);
+  }
+
+  // Heatmap layer (empty until data arrives)
+  if (typeof L.heatLayer === 'function') {
+    state.heatLayer = L.heatLayer([], {
+      radius: 35,
+      blur: 25,
+      maxZoom: 12,
+      max: 1.0,
+      gradient: { 0.0: '#00c853', 0.3: '#76ff03', 0.5: '#ffd600', 0.7: '#ff6d00', 1.0: '#d50000' },
+    });
+  }
+
+  // Wire up the toggle button
+  const toggleBtn = document.getElementById('mapViewToggle');
+  const heatLegend = document.getElementById('heatmapLegend');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      if (state.mapViewMode === 'markers') {
+        // Switch to heatmap
+        state.mapViewMode = 'heatmap';
+        state.map.removeLayer(state._lightTile);
+        state._darkTile.addTo(state.map);
+        state.mapLayer.eachLayer(l => state.map.removeLayer ? null : null);
+        state.map.removeLayer(state.mapLayer);
+        if (state.heatLayer) state.heatLayer.addTo(state.map);
+        toggleBtn.classList.add('active');
+        toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><circle cx="12" cy="11" r="3"/><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"/></svg> Markers`;
+        if (heatLegend) heatLegend.removeAttribute('hidden');
+      } else {
+        // Switch to markers
+        state.mapViewMode = 'markers';
+        state.map.removeLayer(state._darkTile);
+        state._lightTile.addTo(state.map);
+        if (state.heatLayer && state.map.hasLayer(state.heatLayer)) state.map.removeLayer(state.heatLayer);
+        state.mapLayer.addTo(state.map);
+        toggleBtn.classList.remove('active');
+        toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Heatmap`;
+        if (heatLegend) heatLegend.setAttribute('hidden', '');
+      }
+    });
   }
 }
 
@@ -472,6 +524,10 @@ function renderMap(payload) {
 
   const bounds = [];
   let focusLeafletMarker = null;
+
+  // Build heatmap points: [lat, lng, intensity]
+  const maxCount = Math.max(1, ...Array.from(grouped.values()).map(items => items.length));
+  const heatPoints = [];
 
   grouped.forEach((items) => {
     const latitude = items.reduce((sum, item) => sum + Number(item.latitude), 0) / items.length;
@@ -507,7 +563,19 @@ function renderMap(payload) {
       focusLeafletMarker = { marker: leafletMarker, offset };
     }
     bounds.push(offset);
+
+    // Accumulate heatmap point with normalized intensity
+    heatPoints.push([latitude, longitude, items.length / maxCount]);
   });
+
+  // Update heatmap layer with new data
+  if (state.heatLayer) {
+    state.heatLayer.setLatLngs(heatPoints);
+    // If currently in heatmap mode, make sure it's on the map
+    if (state.mapViewMode === 'heatmap' && !state.map.hasLayer(state.heatLayer)) {
+      state.heatLayer.addTo(state.map);
+    }
+  }
 
   if (focusLeafletMarker) {
     state.map.setView(focusLeafletMarker.offset, 13);
@@ -1670,3 +1738,398 @@ bootstrap().catch((error) => {
   setStatus(`Startup failed: ${error.message}`);
   console.error(error);
 });
+
+// ═══════════════════════════════════════════════════════════════════
+//  District-Level Drill-Down Interactive Map
+// ═══════════════════════════════════════════════════════════════════
+
+(function () {
+  'use strict';
+
+  // ── State ────────────────────────────────────────────────────────
+  const ddState = {
+    map: null,
+    districtLayerGroup: null,
+    stationLayerGroup: null,
+    data: null,            // full API payload
+    selectedDistrict: null, // district object currently drilled-into
+    days: 365,
+  };
+
+  // ── DOM refs ────────────────────────────────────────────────────
+  const ddEls = {
+    canvas: document.getElementById('ddmapCanvas'),
+    status: document.getElementById('ddmapStatus'),
+    resetBtn: document.getElementById('ddmapResetBtn'),
+    breadcrumb: document.getElementById('ddmapBreadcrumb'),
+    windowSelect: document.getElementById('ddmapWindowSelect'),
+    districtList: document.getElementById('ddmapDistrictList'),
+    stationPanel: document.getElementById('ddmapStationPanel'),
+    stationPanelTitle: document.getElementById('ddmapStationPanelTitle'),
+    stationList: document.getElementById('ddmapStationList'),
+    crimeList: document.getElementById('ddmapCrimeList'),
+  };
+
+  // ── Colour helpers ───────────────────────────────────────────────
+  function intensityClass(ratio) {
+    if (ratio >= 0.75) return 'dm-critical';
+    if (ratio >= 0.45) return 'dm-high';
+    if (ratio >= 0.2)  return 'dm-moderate';
+    return 'dm-low';
+  }
+
+  function intensityBarColor(ratio) {
+    if (ratio >= 0.75) return '#ef4444';
+    if (ratio >= 0.45) return '#f59e0b';
+    if (ratio >= 0.2)  return '#06b6d4';
+    return '#10b981';
+  }
+
+  function markerSize(ratio) {
+    // bubble diameter 28–64px proportional to crime count ratio
+    return Math.round(28 + ratio * 36);
+  }
+
+  // ── Initialise Leaflet map ───────────────────────────────────────
+  function initDdMap() {
+    if (ddState.map) return;
+    ddState.map = L.map('ddmapCanvas', {
+      zoomControl: true,
+      preferCanvas: true,
+      attributionControl: false,
+    }).setView([15.3173, 75.7139], 7);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap & CARTO',
+      maxZoom: 18,
+    }).addTo(ddState.map);
+
+    // A small attribution in bottom-right
+    L.control.attribution({ position: 'bottomright', prefix: '' })
+      .addAttribution('© CARTO | KSP Analytics')
+      .addTo(ddState.map);
+
+    ddState.districtLayerGroup = L.layerGroup().addTo(ddState.map);
+    ddState.stationLayerGroup  = L.layerGroup().addTo(ddState.map);
+  }
+
+  // ── Render district markers on map ──────────────────────────────
+  function renderDistrictMarkers(districts) {
+    ddState.districtLayerGroup.clearLayers();
+    ddState.stationLayerGroup.clearLayers();
+
+    (districts || []).forEach((district) => {
+      const lat = district.centroidLat;
+      const lng = district.centroidLng;
+      if (!lat || !lng) return;
+
+      const ratio = district.intensityRatio || 0;
+      const cls   = intensityClass(ratio);
+      const size  = markerSize(ratio);
+      const abbr  = (district.districtName || '').slice(0, 3).toUpperCase();
+
+      const icon = L.divIcon({
+        html: `<div class="ddmap-district-marker ${cls}" style="width:${size}px;height:${size}px;font-size:${Math.max(9, Math.round(size * 0.22))}px">${abbr}</div>`,
+        className: '',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+
+      const marker = L.marker([lat, lng], { icon }).addTo(ddState.districtLayerGroup);
+
+      // Rich popup
+      const topCrimes = (district.topCrimes || []).slice(0, 3)
+        .map(c => `<li style="font-size:0.78rem;color:#94a3b8;">${escapeHtml(c.crimeName)} <span style="color:#e2e8f0;font-weight:600;">(${c.caseCount})</span></li>`)
+        .join('');
+
+      marker.bindPopup(`
+        <div style="font-family:'Space Grotesk',sans-serif;padding:4px;min-width:200px;">
+          <div style="font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:4px;">${escapeHtml(district.districtName)}</div>
+          <div style="font-size:0.85rem;font-weight:600;color:#0284c7;margin-bottom:8px;">${formatNumber(district.caseCount)} Registered Cases</div>
+          ${topCrimes ? `<div style="font-size:0.78rem;color:#374151;margin-bottom:4px;font-weight:600;">Top Crime Types:</div><ul style="margin:0 0 8px;padding-left:14px;">${topCrimes}</ul>` : ''}
+          <button type="button" class="btn-browse-cases" style="margin-top:6px;"
+            onclick="window._ddDrillDistrict(${district.districtId})">
+            🔍 Drill Into Stations
+          </button>
+        </div>
+      `);
+
+      marker.on('click', () => {
+        drillIntoDistrict(district);
+      });
+    });
+  }
+
+  // ── Render station markers on drill-down ─────────────────────────
+  function renderStationMarkers(stations) {
+    ddState.stationLayerGroup.clearLayers();
+    const maxCount = Math.max(...(stations || []).map(s => s.caseCount), 1);
+
+    (stations || []).forEach((station) => {
+      const lat = station.centroidLat;
+      const lng = station.centroidLng;
+      if (!lat || !lng) return;
+
+      const ratio = station.caseCount / maxCount;
+      const size  = Math.round(22 + ratio * 18);
+      const abbr  = String(station.caseCount);
+
+      const icon = L.divIcon({
+        html: `<div class="ddmap-station-marker" style="width:${size}px;height:${size}px;font-size:${Math.max(8, Math.round(size * 0.28))}px">${abbr}</div>`,
+        className: '',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+
+      const marker = L.marker([lat, lng], { icon }).addTo(ddState.stationLayerGroup);
+
+      const topCrimes = (station.topCrimes || []).slice(0, 3)
+        .map(c => `<li style="font-size:0.78rem;color:#374151;">${escapeHtml(c.crimeName)} <span style="font-weight:600;">(${c.caseCount})</span></li>`)
+        .join('');
+
+      marker.bindPopup(`
+        <div style="font-family:'Space Grotesk',sans-serif;padding:4px;min-width:180px;">
+          <div style="font-weight:700;font-size:0.95rem;color:#0f172a;margin-bottom:4px;">${escapeHtml(station.stationName)}</div>
+          <div style="font-size:0.82rem;font-weight:600;color:#7c3aed;margin-bottom:8px;">${formatNumber(station.caseCount)} Cases</div>
+          ${topCrimes ? `<ul style="margin:0;padding-left:14px;">${topCrimes}</ul>` : ''}
+          <button type="button" class="btn-browse-cases" style="margin-top:8px;"
+            onclick="window.openCaseBrowser('${escapeHtml(station.stationName)}', ${station.stationId}, ${ddState.selectedDistrict?.districtId || 0})">
+            📋 Browse Cases
+          </button>
+        </div>
+      `);
+    });
+  }
+
+  // ── District rank list (sidebar) ────────────────────────────────
+  function renderDistrictRankList(districts) {
+    const el = ddEls.districtList;
+    if (!el) return;
+    const maxCount = Math.max(...(districts || []).map(d => d.caseCount), 1);
+
+    el.innerHTML = (districts || []).slice(0, 31).map((d, i) => {
+      const ratio = d.caseCount / maxCount;
+      const barColor = intensityBarColor(ratio);
+      const barWidth = Math.round(ratio * 100);
+      const isSelected = ddState.selectedDistrict?.districtId === d.districtId;
+      return `
+        <div class="ddmap-rank-row${isSelected ? ' selected' : ''}"
+             data-district-id="${d.districtId}"
+             title="${escapeHtml(d.districtName)} — ${d.caseCount} cases">
+          <span class="ddmap-rank-num">${i + 1}</span>
+          <span class="ddmap-rank-name">${escapeHtml(d.districtName)}</span>
+          <div class="ddmap-rank-bar-wrap">
+            <div class="ddmap-rank-bar" style="width:${barWidth}%;background:${barColor};"></div>
+          </div>
+          <span class="ddmap-rank-count">${formatNumber(d.caseCount)}</span>
+        </div>
+      `;
+    }).join('');
+
+    el.querySelectorAll('.ddmap-rank-row').forEach((row) => {
+      row.addEventListener('click', () => {
+        const dId = Number(row.getAttribute('data-district-id'));
+        const district = (ddState.data?.districts || []).find(d => d.districtId === dId);
+        if (district) drillIntoDistrict(district);
+      });
+    });
+  }
+
+  // ── Station rank list (sidebar) ─────────────────────────────────
+  function renderStationRankList(stations) {
+    const el = ddEls.stationList;
+    if (!el) return;
+    const maxCount = Math.max(...(stations || []).map(s => s.caseCount), 1);
+    el.innerHTML = (stations || []).slice(0, 20).map((s, i) => {
+      const ratio = s.caseCount / maxCount;
+      const barWidth = Math.round(ratio * 100);
+      return `
+        <div class="ddmap-rank-row" title="${escapeHtml(s.stationName)} — ${s.caseCount} cases"
+             style="cursor:default;">
+          <span class="ddmap-rank-num">${i + 1}</span>
+          <span class="ddmap-rank-name">${escapeHtml(s.stationName)}</span>
+          <div class="ddmap-rank-bar-wrap">
+            <div class="ddmap-rank-bar" style="width:${barWidth}%;background:#a855f7;"></div>
+          </div>
+          <span class="ddmap-rank-count">${formatNumber(s.caseCount)}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Crime breakdown bars (sidebar) ──────────────────────────────
+  function renderCrimeBars(crimes) {
+    const el = ddEls.crimeList;
+    if (!el) return;
+    const maxCount = Math.max(...(crimes || []).map(c => c.caseCount), 1);
+    el.innerHTML = (crimes || []).slice(0, 8).map((c) => {
+      const barWidth = Math.round((c.caseCount / maxCount) * 100);
+      return `
+        <div class="ddmap-crime-row">
+          <span class="ddmap-crime-name">${escapeHtml(c.crimeName)}</span>
+          <div class="ddmap-crime-bar-wrap">
+            <div class="ddmap-crime-bar" style="width:${barWidth}%;"></div>
+          </div>
+          <span class="ddmap-crime-count">${formatNumber(c.caseCount)}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Breadcrumb helpers ──────────────────────────────────────────
+  function setBreadcrumb(items) {
+    if (!ddEls.breadcrumb) return;
+    ddEls.breadcrumb.innerHTML = items.map((item, i) => {
+      const isLast = i === items.length - 1;
+      return `
+        ${i > 0 ? '<span class="ddmap-bc-sep">›</span>' : ''}
+        <span class="ddmap-bc-item${isLast ? ' active' : ''}"
+              ${!isLast ? `data-bc-idx="${i}"` : ''}>${escapeHtml(item.label)}</span>
+      `;
+    }).join('');
+    ddEls.breadcrumb.querySelectorAll('[data-bc-idx]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const idx = Number(el.getAttribute('data-bc-idx'));
+        if (idx === 0) resetDdMap();
+      });
+    });
+  }
+
+  // ── Drill into a district ────────────────────────────────────────
+  function drillIntoDistrict(district) {
+    ddState.selectedDistrict = district;
+
+    // Show/hide panels
+    if (ddEls.stationPanel) ddEls.stationPanel.removeAttribute('hidden');
+    if (ddEls.stationPanelTitle) ddEls.stationPanelTitle.textContent = `${district.districtName} Stations`;
+    if (ddEls.resetBtn) ddEls.resetBtn.style.display = 'inline-flex';
+
+    setBreadcrumb([
+      { label: 'Karnataka State' },
+      { label: district.districtName },
+    ]);
+
+    // Update district rank list (highlight selected)
+    renderDistrictRankList(ddState.data?.districts || []);
+
+    // Render station markers on map
+    const stations = district.stations || [];
+    ddState.districtLayerGroup.clearLayers(); // hide district bubbles
+    renderStationMarkers(stations);
+
+    // Fit map to stations with GPS data
+    const stationsWithGps = stations.filter(s => s.centroidLat && s.centroidLng);
+    if (stationsWithGps.length >= 2) {
+      const bounds = stationsWithGps.map(s => [s.centroidLat, s.centroidLng]);
+      ddState.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+    } else if (district.centroidLat && district.centroidLng) {
+      ddState.map.setView([district.centroidLat, district.centroidLng], 10);
+    }
+
+    // Render station rank list
+    renderStationRankList(stations);
+
+    // Show crime breakdown for this district
+    renderCrimeBars(district.topCrimes || []);
+
+    // Update status
+    if (ddEls.status) {
+      ddEls.status.innerHTML = `<span class="live-dot"></span> ${escapeHtml(district.districtName)} · ${formatNumber(district.caseCount)} cases · ${stations.length} stations`;
+    }
+  }
+
+  // ── Reset to statewide view ──────────────────────────────────────
+  function resetDdMap() {
+    ddState.selectedDistrict = null;
+    ddState.stationLayerGroup.clearLayers();
+    if (ddEls.stationPanel) ddEls.stationPanel.setAttribute('hidden', '');
+    if (ddEls.resetBtn) ddEls.resetBtn.style.display = 'none';
+    setBreadcrumb([{ label: 'Karnataka State' }]);
+
+    const districts = ddState.data?.districts || [];
+    renderDistrictMarkers(districts);
+    renderDistrictRankList(districts);
+    // Top-5 statewide crimes
+    const allCrimes = buildStatewideCrimes(districts);
+    renderCrimeBars(allCrimes);
+
+    if (ddEls.status) {
+      ddEls.status.innerHTML = `<span class="live-dot"></span> ${districts.length} districts · ${formatNumber(ddState.data?.totalCases || 0)} total cases`;
+    }
+    ddState.map.setView([15.3173, 75.7139], 7);
+  }
+
+  // ── Aggregate statewide crime counts ─────────────────────────────
+  function buildStatewideCrimes(districts) {
+    const counter = {};
+    (districts || []).forEach(d => {
+      (d.topCrimes || []).forEach(c => {
+        counter[c.crimeName] = (counter[c.crimeName] || 0) + c.caseCount;
+      });
+    });
+    return Object.entries(counter)
+      .map(([crimeName, caseCount]) => ({ crimeName, caseCount }))
+      .sort((a, b) => b.caseCount - a.caseCount)
+      .slice(0, 8);
+  }
+
+  // ── Fetch data and render ────────────────────────────────────────
+  async function loadDdMap() {
+    initDdMap();
+    if (ddEls.status) ddEls.status.innerHTML = `<span class="pulse-icon"></span> Fetching district data...`;
+
+    try {
+      const payload = await api(`/api/district_map?days=${ddState.days}`);
+      ddState.data = payload;
+      const districts = payload.districts || [];
+      renderDistrictMarkers(districts);
+      renderDistrictRankList(districts);
+      renderCrimeBars(buildStatewideCrimes(districts));
+      setBreadcrumb([{ label: 'Karnataka State' }]);
+      if (ddEls.status) {
+        ddEls.status.innerHTML = `<span class="live-dot"></span> ${districts.length} districts · ${formatNumber(payload.totalCases || 0)} cases`;
+      }
+    } catch (err) {
+      if (ddEls.status) {
+        ddEls.status.innerHTML = `<span style="color:#ef4444">⚠ ${escapeHtml(err.message)}</span>`;
+      }
+      console.error('District map load error:', err);
+    }
+  }
+
+  // ── Wire up global drill helper (used from Leaflet popup HTML) ───
+  window._ddDrillDistrict = function (districtId) {
+    const district = (ddState.data?.districts || []).find(d => d.districtId === districtId);
+    if (district) drillIntoDistrict(district);
+  };
+
+  // ── Window select change ─────────────────────────────────────────
+  if (ddEls.windowSelect) {
+    ddEls.windowSelect.addEventListener('change', () => {
+      ddState.days = Number(ddEls.windowSelect.value) || 365;
+      resetDdMap();
+      loadDdMap();
+    });
+  }
+
+  // ── Reset button ─────────────────────────────────────────────────
+  if (ddEls.resetBtn) {
+    ddEls.resetBtn.addEventListener('click', resetDdMap);
+  }
+
+  // ── Lazy initialise when section scrolls into view ───────────────
+  if (ddEls.canvas && typeof IntersectionObserver !== 'undefined') {
+    let loaded = false;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !loaded) {
+        loaded = true;
+        observer.disconnect();
+        loadDdMap();
+      }
+    }, { threshold: 0.1 });
+    observer.observe(ddEls.canvas);
+  } else if (ddEls.canvas) {
+    // Fallback: load after main bootstrap settles
+    setTimeout(loadDdMap, 1200);
+  }
+})();

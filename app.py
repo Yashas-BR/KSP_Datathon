@@ -23,6 +23,7 @@ from flask_cors import CORS
 
 from ksp.analytics import (
     build_dashboard_payload,
+    build_district_map_payload,
     build_network_payload,
     build_occupation_correlation_payload,
     build_socio_predictive_payload,
@@ -143,6 +144,15 @@ def create_app() -> Flask:
             return jsonify(build_station_lookup_payload(request, district_id=district_id))
         except Exception as e:
             logger.error(f"Stations endpoint error: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/district_map")
+    def district_map():
+        try:
+            days = request.args.get("days", default=365, type=int)
+            return jsonify(build_district_map_payload(request, days=days))
+        except Exception as e:
+            logger.error(f"District map endpoint error: {e}")
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/socio_predictive")

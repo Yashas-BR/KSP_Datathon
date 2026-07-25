@@ -583,6 +583,64 @@ input:checked + .slider:before {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* ── Heatmap Toggle Button ── */
+.map-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font: 600 0.78rem/1 'IBM Plex Mono', monospace;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.map-view-toggle:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.65);
+  transform: translateY(-1px);
+}
+.map-view-toggle.active {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+}
+
+/* ── Heatmap Legend Strip ── */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+.heatmap-legend .legend-label {
+  font: 500 0.72rem/1 'IBM Plex Mono', monospace;
+  color: rgba(255,255,255,0.65);
+  white-space: nowrap;
+}
+.heatmap-legend .legend-gradient {
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to right,
+    #00c853 0%,
+    #76ff03 30%,
+    #ffd600 50%,
+    #ff6d00 70%,
+    #d50000 100%
+  );
+  box-shadow: 0 0 8px rgba(213, 0, 0, 0.4);
+}
+
 .map-foot {
   margin-top: 18px;
   display: grid;
@@ -2089,5 +2147,283 @@ input:checked + .slider:before {
 }
 .nlq-empty-rows p {
   margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────
+   District Drill-Down Map  (#districtDrilldown)
+   ───────────────────────────────────────────────────── */
+
+.ddmap-panel {
+  margin-top: 24px;
+}
+
+/* Controls row */
+.ddmap-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  margin-bottom: 16px;
+}
+
+/* Breadcrumb navigation */
+.ddmap-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.ddmap-bc-item {
+  font: 500 0.82rem/1 'Space Grotesk', sans-serif;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: color .18s, background .18s;
+}
+.ddmap-bc-item:hover {
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.08);
+}
+.ddmap-bc-item.active {
+  color: #f1f5f9;
+  background: rgba(148, 163, 184, 0.1);
+  pointer-events: none;
+}
+.ddmap-bc-sep {
+  color: var(--muted);
+  font-size: 0.85rem;
+  opacity: 0.5;
+}
+
+/* Workspace: map + aside */
+.ddmap-workspace {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  min-height: 520px;
+}
+@media (max-width: 900px) {
+  .ddmap-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Map canvas */
+.ddmap-map-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+.ddmap-canvas {
+  height: 520px;
+  width: 100%;
+  background: #0d1627;
+}
+
+/* Map legend */
+.ddmap-legend {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(7, 10, 18, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 6px 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  z-index: 500;
+}
+.ddmap-legend-label {
+  font: 500 0.72rem/1 'IBM Plex Mono', monospace;
+  color: var(--muted);
+}
+.ddmap-legend-gradient {
+  width: 90px;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #10b981, #06b6d4, #f59e0b, #ef4444, #7c3aed);
+}
+
+/* Aside column */
+.ddmap-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 520px;
+}
+
+/* Shared rank/station panel */
+.ddmap-rank-panel,
+.ddmap-station-panel,
+.ddmap-crime-panel {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ddmap-rank-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font: 600 0.8rem/1 'Space Grotesk', sans-serif;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.ddmap-rank-list {
+  overflow-y: auto;
+  max-height: 180px;
+  padding: 6px;
+}
+
+/* Individual district / station rank row */
+.ddmap-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.ddmap-rank-row:hover {
+  background: rgba(6, 182, 212, 0.08);
+}
+.ddmap-rank-row.selected {
+  background: rgba(6, 182, 212, 0.13);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+.ddmap-rank-num {
+  font: 700 0.72rem/1 'IBM Plex Mono', monospace;
+  color: var(--muted);
+  min-width: 20px;
+  text-align: right;
+}
+.ddmap-rank-name {
+  flex: 1;
+  font: 500 0.82rem/1.3 'Inter', sans-serif;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ddmap-rank-bar-wrap {
+  flex: 0 0 60px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.12);
+  overflow: hidden;
+}
+.ddmap-rank-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+.ddmap-rank-count {
+  font: 600 0.75rem/1 'IBM Plex Mono', monospace;
+  color: #94a3b8;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* Crime breakdown bars */
+.ddmap-crime-bars {
+  padding: 8px;
+}
+.ddmap-crime-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 7px;
+}
+.ddmap-crime-name {
+  flex: 1;
+  font: 400 0.78rem/1.3 'Inter', sans-serif;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ddmap-crime-bar-wrap {
+  flex: 0 0 70px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.1);
+}
+.ddmap-crime-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-red));
+  transition: width .4s ease;
+}
+.ddmap-crime-count {
+  font: 600 0.72rem/1 'IBM Plex Mono', monospace;
+  color: var(--muted);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── Custom Leaflet markers for drill-down map ── */
+.ddmap-district-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.35);
+  font: 700 0.72rem/1 'IBM Plex Mono', monospace;
+  color: #fff;
+  transition: transform .2s, box-shadow .2s;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.ddmap-district-marker:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 18px rgba(239,68,68,0.5);
+  border-color: #fff;
+}
+.ddmap-district-marker.dm-critical {
+  background: radial-gradient(circle, #ef4444 0%, #7c0000 100%);
+  box-shadow: 0 0 14px rgba(239,68,68,0.45);
+}
+.ddmap-district-marker.dm-high {
+  background: radial-gradient(circle, #f59e0b 0%, #92400e 100%);
+  box-shadow: 0 0 12px rgba(245,158,11,0.35);
+}
+.ddmap-district-marker.dm-moderate {
+  background: radial-gradient(circle, #06b6d4 0%, #0e4a5f 100%);
+  box-shadow: 0 0 10px rgba(6,182,212,0.3);
+}
+.ddmap-district-marker.dm-low {
+  background: radial-gradient(circle, #10b981 0%, #064e3b 100%);
+  box-shadow: 0 0 8px rgba(16,185,129,0.25);
+}
+
+.ddmap-station-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, #a855f7 0%, #4c1d95 100%);
+  border-radius: 50%;
+  border: 2px solid rgba(168,85,247,0.5);
+  font: 600 0.65rem/1 'IBM Plex Mono', monospace;
+  color: #fff;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  transition: transform .2s, box-shadow .2s;
+}
+.ddmap-station-marker:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 16px rgba(168,85,247,0.55);
 }
 
