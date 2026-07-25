@@ -512,19 +512,28 @@ function renderMap(payload) {
   }
 }
 
-// Case Intelligence Explorer Modal Logic (Headings Only)
+// Case Intelligence Explorer Modal Logic
 window.openCaseBrowser = function(stationName, stationId, districtId) {
   const allMarkers = state.dashboard?.markers || [];
-  const filteredCases = allMarkers.filter((marker) => {
+  let filteredCases = allMarkers.filter((marker) => {
     if (stationId && Number(marker.stationId) === Number(stationId)) return true;
     if (!stationId && districtId && Number(marker.districtId) === Number(districtId)) return true;
     return false;
   });
 
+  // Fallback: If stationId is missing or doesn't match numerically, search by stationName
+  if (!filteredCases.length && stationName) {
+    const sName = String(stationName).trim().toLowerCase();
+    filteredCases = allMarkers.filter((marker) => {
+      const mName = String(marker.stationName || '').trim().toLowerCase();
+      return mName.includes(sName) || sName.includes(mName);
+    });
+  }
+
   state.currentBrowserStationName = stationName || 'Police Station';
   state.currentBrowserCases = filteredCases;
 
-  els.caseBrowserTitle.textContent = `${state.currentBrowserStationName} • Case Headings List`;
+  els.caseBrowserTitle.textContent = `${state.currentBrowserStationName} • Registered Incidents`;
   els.caseBrowserModal.hidden = false;
   els.modalCaseSearch.value = '';
   renderCaseList();
@@ -542,35 +551,35 @@ function renderCaseList() {
     return text.includes(query);
   });
 
-  els.caseCountBadge.textContent = `${cases.length} Case Headings`;
+  els.caseCountBadge.textContent = `${cases.length} Cases Loaded`;
 
   if (!cases.length) {
-    els.caseListContent.innerHTML = '<div class="muted" style="padding: 24px; text-align: center;">No cases matched the search criteria.</div>';
+    els.caseListContent.innerHTML = '<div class="muted" style="padding: 24px; text-align: center;">No cases found matching criteria.</div>';
     return;
   }
 
   els.caseListContent.innerHTML = cases.map((item, idx) => `
-    <details class="case-heading-item">
-      <summary class="case-heading-summary">
-        <div class="case-heading-left">
+    <article class="case-card">
+      <div class="case-card-head">
+        <div class="case-card-left">
           <span class="case-num">#${idx + 1}</span>
-          <span class="case-title-text">${escapeHtml(item.crimeName || 'Crime Incident')}</span>
+          <span class="case-card-title">${escapeHtml(item.crimeName || 'Crime Incident')}</span>
           <span class="case-no-badge">FIR: ${escapeHtml(item.crimeNo || 'N/A')}</span>
         </div>
-        <div class="case-heading-right">
+        <div class="case-card-right">
           <span class="case-date-tag">${escapeHtml(item.registeredDate || 'N/A')} ${item.hour !== undefined ? item.hour + ':00' : ''}</span>
           <span class="badge-tag ${item.severity === 'Heinous' ? 'heinous' : 'normal'}">${escapeHtml(item.severity || 'Recorded')}</span>
         </div>
-      </summary>
-      <div class="case-details-body">
-        <p><strong>Brief Summary:</strong> ${escapeHtml(item.facts || 'No detailed facts recorded.')}</p>
-        <div class="case-meta-row">
-          <span>Police Station: <strong>${escapeHtml(item.stationName || 'Station')}</strong></span>
-          <span>District: <strong>${escapeHtml(item.districtName || 'District')}</strong></span>
-          <span>Location Coordinates: <strong>${item.latitude ? item.latitude.toFixed(4) + ', ' + item.longitude.toFixed(4) : 'N/A'}</strong></span>
-        </div>
       </div>
-    </details>
+      <div class="case-card-body">
+        <strong>Brief Summary:</strong> ${escapeHtml(item.facts || 'No detailed incident summary recorded.')}
+      </div>
+      <div class="case-card-meta">
+        <span>Police Station: <strong style="color:#ffffff;">${escapeHtml(item.stationName || 'Station')}</strong></span>
+        <span>District: <strong style="color:#ffffff;">${escapeHtml(item.districtName || 'District')}</strong></span>
+        ${item.latitude ? `<span>Location: <strong style="color:#ffffff;">${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}</strong></span>` : ''}
+      </div>
+    </article>
   `).join('');
 }
 
