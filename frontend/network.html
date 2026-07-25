@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KSP · Criminological Network &amp; Link Analysis</title>
+  <meta name="description" content="Visualize criminal associations, repeat offender profiles, and hidden crime networks across Karnataka State Police jurisdictions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/vis-network@9.1.9/dist/vis-network.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/vis-network@9.1.9/dist/dist/vis-network.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a12;
+      --card: rgba(15,23,42,.88);
+      --card-border: rgba(148,163,184,.16);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-blue: #3b82f6;
+      --accent-gold: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-emerald: #10b981;
+      --accent-purple: #a855f7;
+      --shadow: 0 20px 50px rgba(0,0,0,.5);
+      --r: 18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{
+      min-height:100%;
+      background:var(--bg);
+      background-image:
+        radial-gradient(at 0% 0%,rgba(14,165,233,.14) 0,transparent 55%),
+        radial-gradient(at 100% 0%,rgba(168,85,247,.09) 0,transparent 50%),
+        radial-gradient(at 50% 100%,rgba(16,185,129,.07) 0,transparent 55%);
+      color:var(--text);
+      font-family:"Inter","Space Grotesk",system-ui,sans-serif;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden
+    }
+    .orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
+    .orb-a{width:600px;height:600px;background:rgba(6,182,212,.07);top:-200px;left:-200px}
+    .orb-b{width:500px;height:500px;background:rgba(168,85,247,.06);top:-100px;right:-180px}
+    .orb-c{width:400px;height:400px;background:rgba(16,185,129,.05);bottom:-100px;left:40%}
+    .shell{position:relative;z-index:1;width:min(1680px,calc(100vw - 32px));margin:24px auto 56px;display:grid;gap:20px}
+    .card{background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:var(--r);transition:border-color .25s}
+    .card:hover{border-color:rgba(148,163,184,.28)}
+
+    /* Hero */
+    .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;padding:28px 36px;background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(30,41,59,.88));border:1px solid rgba(56,189,248,.2)}
+    .hero-left{flex:1}
+    .header-pill{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px}
+    .live-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-emerald);box-shadow:0 0 10px var(--accent-emerald);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{transform:scale(.95);opacity:.8}50%{transform:scale(1.2);opacity:1}}
+    .eyebrow{letter-spacing:.12em;text-transform:uppercase;color:var(--accent-cyan);font:600 .72rem/1.2 "IBM Plex Mono",monospace}
+    .hero h1{font:700 1.9rem/1.15 "Space Grotesk",sans-serif;margin-bottom:10px}
+    .hero-copy{color:var(--muted);font-size:.95rem;line-height:1.6;max-width:600px}
+    .hero-badges{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font:600 .78rem/1 "IBM Plex Mono",monospace;border:1px solid;white-space:nowrap}
+    .chip-cyan{color:var(--accent-cyan);border-color:rgba(6,182,212,.35);background:rgba(6,182,212,.1)}
+    .chip-purple{color:var(--accent-purple);border-color:rgba(168,85,247,.35);background:rgba(168,85,247,.1)}
+    .chip-gold{color:var(--accent-gold);border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.1)}
+    .chip-red{color:var(--accent-red);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.1)}
+    .chip-icon{width:14px;height:14px;flex-shrink:0}
+    .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.85rem;text-decoration:none;transition:color .2s;margin-bottom:14px}
+    .back-link:hover{color:var(--accent-cyan)}
+
+    /* Controls */
+    .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:22px 28px}
+    .ctrl-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+    .ctrl-group label{font:600 .72rem/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    select,input[type=text]{background:rgba(255,255,255,.06);border:1px solid var(--card-border);border-radius:10px;color:var(--text);padding:9px 14px;font:inherit;font-size:.9rem;outline:none;transition:border-color .2s,box-shadow .2s}
+    select:focus,input[type=text]:focus{border-color:var(--accent-cyan);box-shadow:0 0 0 3px rgba(6,182,212,.15)}
+    select option{background:#0f172a}
+    button{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:10px;cursor:pointer;font:600 .875rem/1 inherit;transition:all .2s;padding:10px 20px}
+    button svg{width:16px;height:16px}
+    .btn-primary{background:linear-gradient(135deg,var(--accent-cyan),#0284c7);color:#fff;box-shadow:0 4px 16px rgba(6,182,212,.3)}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(6,182,212,.4)}
+    .btn-secondary{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--card-border)}
+    .btn-secondary:hover{background:rgba(255,255,255,.12)}
+    .btn-danger{background:rgba(239,68,68,.15);color:var(--accent-red);border:1px solid rgba(239,68,68,.3)}
+    .btn-danger:hover{background:rgba(239,68,68,.25)}
+
+    /* Stats */
+    .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+    .stat-card{background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:14px;padding:18px 20px;transition:border-color .2s,transform .2s}
+    .stat-card:hover{border-color:var(--accent-cyan);transform:translateY(-2px)}
+    .stat-label{font:600 .68rem/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .stat-value{font:700 2rem/1 "Space Grotesk",sans-serif;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .stat-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+
+    /* Layout */
+    .main-layout{display:grid;grid-template-columns:1fr 380px;gap:20px}
+    @media(max-width:1100px){.main-layout{grid-template-columns:1fr}}
+
+    /* Graph panel */
+    .graph-panel{padding:0;overflow:hidden;position:relative}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--card-border)}
+    .panel-title{font:700 1rem/1 "Space Grotesk",sans-serif}
+    .panel-kicker{font:600 .68rem/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-cyan);margin-bottom:4px}
+    #networkCanvas{width:100%;height:640px;background:radial-gradient(ellipse at 50% 50%,rgba(6,182,212,.04) 0,transparent 70%),rgba(5,10,20,.6)}
+    .graph-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:12px 24px;border-top:1px solid var(--card-border);font-size:.8rem;color:var(--muted)}
+    .legend-item{display:flex;align-items:center;gap:7px}
+    .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .legend-diam{width:12px;height:12px;transform:rotate(45deg);flex-shrink:0}
+    .legend-sq{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+    .legend-line{width:24px;height:2px;border-radius:2px;flex-shrink:0}
+
+    /* Sidebar */
+    .sidebar{display:flex;flex-direction:column;gap:16px}
+    .fsw{position:relative}
+    .fsw input{width:100%;padding-right:36px}
+    .fsw .si{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    .offender-list{display:flex;flex-direction:column;gap:2px;max-height:380px;overflow-y:auto;padding:4px}
+    .offender-list::-webkit-scrollbar{width:4px}
+    .offender-list::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:4px}
+    .offender-card{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s}
+    .offender-card:hover{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.3)}
+    .offender-card.active{background:rgba(6,182,212,.13);border-color:var(--accent-cyan)}
+    .offender-avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font:700 .85rem "Space Grotesk",sans-serif}
+    .offender-info{flex:1;min-width:0}
+    .offender-name{font:600 .88rem/1.2 "Space Grotesk",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .offender-meta{font-size:.75rem;color:var(--muted);margin-top:3px}
+    .offender-badge{flex-shrink:0;font:600 .72rem "IBM Plex Mono",monospace;background:rgba(239,68,68,.15);color:var(--accent-red);border:1px solid rgba(239,68,68,.3);border-radius:100px;padding:2px 8px;margin-top:2px}
+
+    /* MO Panel */
+    .mo-empty{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
+    .mo-name{font:700 1.1rem "Space Grotesk",sans-serif;margin-bottom:2px}
+    .mo-pid{font:400 .72rem "IBM Plex Mono",monospace;color:var(--muted)}
+    .mo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .mo-stat{background:rgba(255,255,255,.04);border-radius:10px;padding:10px 14px}
+    .mo-stat-label{font:600 .65rem "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .mo-stat-value{font:700 1.15rem "Space Grotesk",sans-serif}
+    .mo-section-title{font:600 .7rem "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 8px}
+    .mo-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .mo-bar-label{font-size:.78rem;min-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mo-bar-track{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+    .mo-bar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+    .mo-bar-count{font:600 .72rem "IBM Plex Mono",monospace;color:var(--muted);min-width:22px;text-align:right}
+    .district-tags{display:flex;flex-wrap:wrap;gap:6px}
+    .district-tag{font:500 .72rem "IBM Plex Mono",monospace;padding:4px 10px;border-radius:100px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:var(--accent-blue)}
+
+    /* Associations */
+    .assoc-table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    thead th{font:600 .66rem "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 14px;border-bottom:1px solid var(--card-border)}
+    tbody tr{border-bottom:1px solid rgba(148,163,184,.07);transition:background .15s;cursor:pointer}
+    tbody tr:hover{background:rgba(6,182,212,.06)}
+    tbody td{padding:9px 14px;vertical-align:top}
+    .td-name{font:600 .82rem "Space Grotesk",sans-serif}
+    .td-count{font:700 .82rem "IBM Plex Mono",monospace;color:var(--accent-gold);white-space:nowrap}
+    .td-pill{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:100px;border:1px solid;white-space:nowrap}
+
+    /* Loader */
+    .loading-overlay{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:rgba(7,10,18,.85);border-radius:var(--r);flex-direction:column;gap:16px}
+    .loading-overlay.active{display:flex}
+    .spinner{width:44px;height:44px;border-radius:50%;border:3px solid rgba(6,182,212,.2);border-top-color:var(--accent-cyan);animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font:600 .85rem "IBM Plex Mono",monospace;color:var(--muted)}
+
+    /* Toast */
+    #toast{position:fixed;bottom:28px;right:28px;z-index:9999;padding:12px 20px;border-radius:12px;font-size:.875rem;background:rgba(15,23,42,.96);border:1px solid var(--card-border);box-shadow:var(--shadow);backdrop-filter:blur(16px);color:var(--text);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;transform:translateY(12px)}
+    #toast.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+    #toast.err{border-color:rgba(239,68,68,.4);color:var(--accent-red)}
+
+    /* Empty state */
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:640px;gap:14px;color:var(--muted)}
+    .empty-state svg{width:56px;height:56px;opacity:.35}
+    .empty-state p{font-size:.95rem;text-align:center;max-width:320px;line-height:1.55}
+
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.2);border-radius:4px}
+  </style>
+</head>
+<body>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+
+  <div class="shell">
+
+    <!-- HERO -->
+    <header class="hero card">
+      <div class="hero-left">
+        <a href="/" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back to Dashboard
+        </a>
+        <div class="header-pill">
+          <span class="live-dot"></span>
+          <span class="eyebrow">Karnataka State Police &middot; Datathon 2026</span>
+        </div>
+        <h1>Criminological Network &amp; Link Analysis</h1>
+        <p class="hero-copy">
+          Force-directed relationship mapping that connects suspects, victims, and recurring locations &mdash;
+          breaking data silos to expose organized crime structures, repeat offenders, and hidden
+          cross-jurisdictional associations that are invisible in isolated records.
+        </p>
+      </div>
+      <div class="hero-badges">
+        <span class="chip chip-cyan">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-7.5-1.5 1.5M6.5 17.5 5 19M17.5 17.5l1.5 1.5M6.5 6.5 5 5"/></svg>
+          Relationship Mapping
+        </span>
+        <span class="chip chip-purple">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Repeat Offender Tracking
+        </span>
+        <span class="chip chip-gold">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Association Detection
+        </span>
+        <span class="chip chip-red">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Cross-Jurisdiction MO
+        </span>
+      </div>
+    </header>
+
+    <!-- CONTROLS -->
+    <section class="controls card">
+      <div class="ctrl-group">
+        <label for="districtSelect">District Focus</label>
+        <select id="districtSelect">
+          <option value="">All Districts</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label for="focusInput">Focus Person ID</label>
+        <div class="fsw">
+          <input type="text" id="focusInput" placeholder="e.g. P-1234 (optional)">
+          <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <label for="topN">Top N Offenders</label>
+        <select id="topN">
+          <option value="20">Top 20</option>
+          <option value="35" selected>Top 35</option>
+          <option value="50">Top 50</option>
+          <option value="75">Top 75</option>
+          <option value="100">Top 100</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label for="edgeFilter">Show Edges</label>
+        <select id="edgeFilter">
+          <option value="all">All connections</option>
+          <option value="coaccused">Co-accused only</option>
+          <option value="association">Location links only</option>
+        </select>
+      </div>
+      <div class="ctrl-group" style="flex:none">
+        <label>&nbsp;</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-primary" id="runBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run Analysis
+          </button>
+          <button class="btn-secondary" id="resetBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset
+          </button>
+          <button class="btn-secondary" id="fitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            Fit View
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stat-row" id="statRow" style="display:none">
+      <div class="stat-card"><div class="stat-label">Total Nodes</div><div class="stat-value" id="statNodes">0</div><div class="stat-sub">Offenders, victims, locations</div></div>
+      <div class="stat-card"><div class="stat-label">Connections</div><div class="stat-value" id="statEdges">0</div><div class="stat-sub">Shared cases &amp; associations</div></div>
+      <div class="stat-card"><div class="stat-label">Repeat Offenders</div><div class="stat-value" id="statRepeat">0</div><div class="stat-sub">Multi-case individuals</div></div>
+      <div class="stat-card"><div class="stat-label">Associations</div><div class="stat-value" id="statAssoc">0</div><div class="stat-sub">Hidden co-accused links</div></div>
+      <div class="stat-card"><div class="stat-label">Cases Analysed</div><div class="stat-value" id="statCases">0</div><div class="stat-sub">Within scope</div></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-layout">
+      <!-- Graph -->
+      <div class="graph-panel card" id="graphPanel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-kicker">Network Visualization</div>
+            <div class="panel-title">Criminal Relationship Graph</div>
+          </div>
+          <button class="btn-secondary" id="physicsBtn" style="padding:7px 14px;font-size:.8rem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            Physics ON
+          </button>
+        </div>
+        <div class="loading-overlay" id="graphLoader">
+          <div class="spinner"></div>
+          <div class="loading-text">Mapping criminal network&hellip;</div>
+        </div>
+        <div class="empty-state" id="emptyState">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="9" r="4"/><circle cx="19" cy="4" r="2"/><circle cx="19" cy="19" r="2"/>
+            <line x1="13" y1="9" x2="17" y2="4.5"/><line x1="13" y1="10" x2="17" y2="18.5"/>
+          </svg>
+          <p>Configure filters above and click <strong>Run Analysis</strong> to generate the network graph.</p>
+        </div>
+        <div id="networkCanvas" style="display:none"></div>
+        <div class="graph-legend" id="graphLegend" style="display:none">
+          <span class="legend-item"><span class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef444466"></span> Offender</span>
+          <span class="legend-item"><span class="legend-diam" style="background:#3b82f6"></span> Victim</span>
+          <span class="legend-item"><span class="legend-sq" style="background:#10b981"></span> Police Station</span>
+          <span class="legend-item"><span class="legend-line" style="background:rgba(245,158,11,.8)"></span> Co-accused link</span>
+          <span class="legend-item"><span style="width:28px;border-top:2px dashed rgba(6,182,212,.7)"></span> Location link</span>
+          <span style="margin-left:auto;color:var(--muted);font-size:.75rem">Node size = case count &nbsp;&middot;&nbsp; Click node to profile</span>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="card" style="padding:20px">
+          <div class="panel-kicker" style="margin-bottom:6px">Repeat Offender Tracker</div>
+          <div class="panel-title" style="margin-bottom:14px">Top Offenders by Case Count</div>
+          <div class="offender-list" id="offenderList">
+            <div class="mo-empty">Run analysis to see offender profiles.</div>
+          </div>
+        </div>
+        <div class="card" id="moPanel" style="display:none;padding:20px">
+          <div class="panel-kicker" style="margin-bottom:6px">Modus Operandi Radar</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+            <div>
+              <div class="mo-name" id="moName">&mdash;</div>
+              <div class="mo-pid" id="moPid">&mdash;</div>
+            </div>
+            <button class="btn-danger" id="moClearBtn" style="padding:6px 12px;font-size:.75rem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              Clear
+            </button>
+          </div>
+          <div class="mo-grid">
+            <div class="mo-stat"><div class="mo-stat-label">Cases</div><div class="mo-stat-value" id="moCases" style="color:var(--accent-red)">&mdash;</div></div>
+            <div class="mo-stat"><div class="mo-stat-label">Jurisdictions</div><div class="mo-stat-value" id="moJuris" style="color:var(--accent-blue)">&mdash;</div></div>
+          </div>
+          <div class="mo-section-title">Crime Speciality (MO)</div>
+          <div id="moCrimesBars"></div>
+          <div class="mo-section-title">Active Districts</div>
+          <div class="district-tags" id="moDistricts"></div>
+          <div class="mo-section-title">Key Stations</div>
+          <div id="moStationsBars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSOCIATIONS -->
+    <div class="card" id="assocPanel" style="display:none;padding:20px">
+      <div class="panel-kicker" style="margin-bottom:6px">Association Detection</div>
+      <div class="panel-title" style="margin-bottom:16px">Hidden Criminal Associations &mdash; Co-Accused Pairs</div>
+      <div class="assoc-table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Offender A</th><th>Offender B</th><th>Shared Cases</th><th>Strength</th></tr></thead>
+          <tbody id="assocBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- .shell -->
+
+  <div id="toast"></div>
+
+  <script>
+  (function(){
+    const API = location.origin;
+    let net = null, data = null, physics = true, offMap = {};
+    const g = id => document.getElementById(id);
+
+    function toast(msg, err, dur){
+      const el = g('toast'); el.textContent = msg;
+      el.className = 'show' + (err ? ' err' : '');
+      clearTimeout(el._t); el._t = setTimeout(()=>{ el.className=''; }, dur||3500);
+    }
+
+    async function loadDistricts(){
+      try{
+        const r = await fetch(API+'/api/meta'), d = await r.json();
+        (d.districts||[]).sort((a,b)=>(a.districtName||'').localeCompare(b.districtName||'')).forEach(x=>{
+          const o=document.createElement('option'); o.value=x.districtId; o.textContent=x.districtName;
+          g('districtSelect').appendChild(o);
+        });
+      }catch(e){ console.warn('Districts failed',e); }
+    }
+
+    function showLoad(on){
+      g('graphLoader').classList.toggle('active',on);
+      g('runBtn').disabled=on;
+    }
+
+    async function run(){
+      showLoad(true);
+      g('emptyState').style.display='none';
+      g('networkCanvas').style.display='none';
+      g('graphLegend').style.display='none';
+      const p=new URLSearchParams();
+      if(g('districtSelect').value) p.set('district_id',g('districtSelect').value);
+      if(g('focusInput').value.trim()) p.set('focus_person_id',g('focusInput').value.trim());
+      p.set('top',g('topN').value);
+      try{
+        const r=await fetch(API+'/api/network?'+p);
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const d=await r.json();
+        if(d.error) throw new Error(d.error);
+        data=d;
+        renderAll(d);
+      }catch(e){ toast('Error: '+e.message,true); g('emptyState').style.display='flex'; }
+      finally{ showLoad(false); }
+    }
+
+    function animN(id,t){
+      const el=g(id); let c=0;
+      const step=Math.max(1,Math.ceil(t/40));
+      const tm=setInterval(()=>{ c=Math.min(c+step,t); el.textContent=c.toLocaleString(); if(c>=t)clearInterval(tm); },25);
+    }
+
+    function renderAll(d){
+      g('statRow').style.display='';
+      animN('statNodes',(d.nodes||[]).length);
+      animN('statEdges',(d.edges||[]).length);
+      animN('statRepeat',(d.repeatOffenders||[]).length);
+      animN('statAssoc',(d.associations||[]).length);
+      animN('statCases',d.totalCases||0);
+      renderGraph(d);
+      renderOffenders(d.repeatOffenders||[]);
+      renderAssoc(d.associations||[]);
+    }
+
+    function renderGraph(d){
+      const ft=g('edgeFilter').value;
+      const vNodes=new vis.DataSet((d.nodes||[]).map(visNode));
+      const vEdges=new vis.DataSet((d.edges||[]).filter(e=>ft==='all'||e.type===ft).map(visEdge));
+      if(net){net.destroy();net=null;}
+      g('networkCanvas').style.display='block';
+      g('graphLegend').style.display='flex';
+      net=new vis.Network(g('networkCanvas'),{nodes:vNodes,edges:vEdges},{
+        nodes:{shape:'dot',font:{color:'#f8fafc',size:12,face:'Inter,sans-serif',strokeWidth:2,strokeColor:'rgba(7,10,18,.85)'},borderWidth:1.5,borderWidthSelected:3,shadow:{enabled:true,size:12,x:0,y:0}},
+        edges:{smooth:{type:'dynamic'},font:{color:'rgba(148,163,184,.8)',size:10,strokeWidth:2,strokeColor:'rgba(7,10,18,.8)'},selectionWidth:2,hoverWidth:0.5},
+        physics:{enabled:physics,barnesHut:{gravitationalConstant:-8000,centralGravity:.35,springLength:180,springConstant:.04,damping:.12}},
+        interaction:{hover:true,tooltipDelay:150,zoomView:true,navigationButtons:false},
+        layout:{improvedLayout:(d.nodes||[]).length<200}
+      });
+      net.on('click',p=>{ if(p.nodes.length){ const o=offMap[p.nodes[0]]; if(o){renderMO(o);document.querySelectorAll('.offender-card').forEach(c=>c.classList.toggle('active',c.dataset.pid===o.personId));} }});
+      toast('Network: '+(d.nodes||[]).length+' nodes, '+(d.edges||[]).length+' edges',false,2500);
+    }
+
+    function visNode(n){
+      const t=n.type||'offender';
+      if(t==='offender'){
+        const sz=Math.max(16,Math.min(52,12+(n.caseCount||1)*3.5));
+        return{id:n.id,label:tr(n.label,18),title:n.title||n.label,size:sz,color:{background:'#ef4444',border:'#dc2626',highlight:{background:'#f87171',border:'#ef4444'},hover:{background:'#fca5a5',border:'#ef4444'}},font:{color:'#fff'}};
+      }else if(t==='victim'){
+        return{id:n.id,label:tr(n.label,16),title:'Victim: '+n.label,size:12,shape:'diamond',color:{background:'#3b82f6',border:'#2563eb',highlight:{background:'#60a5fa',border:'#3b82f6'},hover:{background:'#93c5fd',border:'#3b82f6'}}};
+      }else{
+        const sz=Math.max(14,Math.min(40,10+(n.caseCount||1)*2));
+        return{id:n.id,label:tr(n.label,20),title:'Station: '+n.label+'\nDistrict: '+(n.districtName||'?')+'\nCases: '+(n.caseCount||'?'),size:sz,shape:'square',color:{background:'#10b981',border:'#059669',highlight:{background:'#34d399',border:'#10b981'},hover:{background:'#6ee7b7',border:'#10b981'}}};
+      }
+    }
+
+    function visEdge(e){
+      const co=e.type==='coaccused';
+      return{from:e.from,to:e.to,label:e.value>1?String(e.value):'',value:e.value||1,width:Math.max(1,Math.min(6,e.value||1)),color:{color:co?'rgba(245,158,11,.65)':'rgba(6,182,212,.4)',highlight:co?'#f59e0b':'#06b6d4',hover:co?'#fbbf24':'#38bdf8',opacity:.8},dashes:!co};
+    }
+
+    function tr(s,max){ return s&&s.length>max?s.slice(0,max-1)+'\u2026':(s||''); }
+    function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function renderOffenders(list){
+      offMap={};
+      const el=g('offenderList');
+      if(!list.length){el.innerHTML='<div class="mo-empty">No repeat offenders in scope.</div>';return;}
+      el.innerHTML='';
+      list.forEach((o,i)=>{
+        offMap[o.personId]=o;
+        const hue=(i*43)%360;
+        const ini=(o.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const c=document.createElement('div'); c.className='offender-card'; c.dataset.pid=o.personId;
+        c.innerHTML='<div class="offender-avatar" style="background:hsl('+hue+',60%,25%);color:hsl('+hue+',80%,70%)">'+ini+'</div>'+
+          '<div class="offender-info"><div class="offender-name">'+esc(o.name||o.personId)+'</div>'+
+          '<div class="offender-meta">'+esc(o.specialtyCrime||'Unknown')+((o.districts&&o.districts.length)?' &middot; '+o.districts.slice(0,2).map(d=>d.districtName).join(', '):'')+'</div></div>'+
+          '<div class="offender-badge">'+o.caseCount+' cases</div>';
+        c.addEventListener('click',()=>{
+          document.querySelectorAll('.offender-card').forEach(x=>x.classList.remove('active'));
+          c.classList.add('active'); renderMO(o);
+          if(net){net.selectNodes([o.personId]);net.focus(o.personId,{scale:1.4,animation:{duration:600,easingFunction:'easeInOutQuad'}});}
+        });
+        el.appendChild(c);
+      });
+    }
+
+    function renderMO(o){
+      g('moPanel').style.display='block';
+      g('moName').textContent=o.name||o.personId;
+      g('moPid').textContent='ID: '+o.personId;
+      g('moCases').textContent=o.caseCount;
+      g('moJuris').textContent=(o.districts||[]).length;
+
+      const cb=g('moCrimesBars'); cb.innerHTML='';
+      const mx=Math.max(...(o.modes||[]).map(m=>m.count),1);
+      (o.modes||[]).forEach(m=>cb.appendChild(bar(m.crimeName,m.count,mx,'#ef4444')));
+
+      const db=g('moDistricts'); db.innerHTML='';
+      (o.districts||[]).forEach(d=>{ const t=document.createElement('span'); t.className='district-tag'; t.textContent=d.districtName+' ('+d.count+')'; db.appendChild(t); });
+
+      const sb=g('moStationsBars'); sb.innerHTML='';
+      const ms=Math.max(...(o.stations||[]).map(s=>s.count),1);
+      (o.stations||[]).forEach(s=>sb.appendChild(bar(s.stationName,s.count,ms,'#06b6d4')));
+    }
+
+    function bar(label,count,max,color){
+      const pct=Math.round((count/max)*100);
+      const r=document.createElement('div'); r.className='mo-bar-row';
+      r.innerHTML='<span class="mo-bar-label" title="'+esc(label)+'">'+esc(label)+'</span>'+
+        '<div class="mo-bar-track"><div class="mo-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>'+
+        '<span class="mo-bar-count">'+count+'</span>';
+      return r;
+    }
+
+    function renderAssoc(list){
+      if(!list.length){g('assocPanel').style.display='none';return;}
+      g('assocPanel').style.display='block';
+      const tb=g('assocBody'); tb.innerHTML='';
+      const mx=list[0].sharedCases||1;
+      const cols={Critical:'var(--accent-red)',High:'var(--accent-gold)',Medium:'var(--accent-cyan)',Low:'var(--muted)'};
+      list.slice(0,50).forEach((a,i)=>{
+        const s=a.sharedCases>=5?'Critical':a.sharedCases>=3?'High':a.sharedCases>=2?'Medium':'Low';
+        const col=cols[s];
+        const nA=(offMap[a.offenderA]||{}).name||a.offenderA;
+        const nB=(offMap[a.offenderB]||{}).name||a.offenderB;
+        const pct=Math.round((a.sharedCases/mx)*100);
+        const tr2=document.createElement('tr');
+        tr2.innerHTML='<td style="color:var(--muted);font-size:.75rem">'+(i+1)+'</td>'+
+          '<td><div class="td-name">'+esc(nA)+'</div><div style="font-size:.7rem;color:var(--muted)">'+esc(a.offenderA)+'</div></td>'+
+          '<td><div class="td-name">'+esc(nB)+'</div><div style="font-size:.7rem;color:var(--muted)">'+esc(a.offenderB)+'</div></td>'+
+          '<td class="td-count">'+a.sharedCases+' cases</td>'+
+          '<td><span class="td-pill" style="color:'+col+';border-color:'+col+'40;background:'+col+'10">'+s+'</span>'+
+          '<div style="margin-top:5px;height:4px;width:80px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:2px"></div></div></td>';
+        tr2.addEventListener('click',()=>{
+          if(net){net.selectNodes([a.offenderA,a.offenderB]);net.fit({nodes:[a.offenderA,a.offenderB],animation:{duration:700,easingFunction:'easeInOutQuad'}});}
+        });
+        tb.appendChild(tr2);
+      });
+    }
+
+    g('runBtn').addEventListener('click',run);
+
+    g('resetBtn').addEventListener('click',()=>{
+      g('districtSelect').value=''; g('focusInput').value='';
+      g('topN').value='35'; g('edgeFilter').value='all';
+      if(net){net.destroy();net=null;}
+      g('networkCanvas').style.display='none'; g('graphLegend').style.display='none';
+      g('emptyState').style.display='flex';
+      g('offenderList').innerHTML='<div class="mo-empty">Run analysis to see offender profiles.</div>';
+      g('moPanel').style.display='none'; g('assocPanel').style.display='none';
+      g('statRow').style.display='none'; data=null;
+    });
+
+    g('fitBtn').addEventListener('click',()=>{ if(net) net.fit({animation:{duration:500,easingFunction:'easeInOutQuad'}}); });
+
+    g('physicsBtn').addEventListener('click',()=>{
+      physics=!physics;
+      if(net) net.setOptions({physics:{enabled:physics}});
+      g('physicsBtn').innerHTML=(physics
+        ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> Physics ON'
+        :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Physics OFF');
+      g('physicsBtn').style.color=physics?'':'var(--accent-gold)';
+      g('physicsBtn').style.borderColor=physics?'':'rgba(245,158,11,.4)';
+    });
+
+    g('edgeFilter').addEventListener('change',()=>{ if(data) renderGraph(data); });
+
+    g('moClearBtn').addEventListener('click',()=>{
+      g('moPanel').style.display='none';
+      document.querySelectorAll('.offender-card').forEach(c=>c.classList.remove('active'));
+      if(net) net.unselectAll();
+    });
+
+    loadDistricts();
+  })();
+  </script>
+</body>
+</html>
