@@ -1,7 +1,7 @@
 {
-  "command": "python app.py",
+  "command": "bash start.sh",
   "build_path": ".",
-  "stack": "python_3_9",
+  "stack": "python_3_10",
   "env_variables": {
     "PYTHONUNBUFFERED": "1"
   },
