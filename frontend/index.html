@@ -1,18 +1,22 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KSP AI-Driven Crime Analytics Platform</title>
+  <title>K-SCAN</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <link rel="stylesheet" href="/assets/style.css">
 </head>
+
 <body>
   <div class="backdrop backdrop-a"></div>
   <div class="backdrop backdrop-b"></div>
@@ -22,42 +26,74 @@
   <nav class="topnav">
     <div class="topnav-inner">
       <a href="/" class="nav-brand">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>KSP Analytics</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        <span>K-SCAN</span>
         <span class="nav-brand-abbr">Platform</span>
       </a>
       <div class="nav-links">
         <a href="/" class="nav-link active">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
           Dashboard
         </a>
         <a href="/assets/network.html" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
           Network Analysis
         </a>
         <div class="nav-divider"></div>
         <a href="#statCards" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
           Crime Stats
         </a>
         <a href="#mapCanvas" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
           Hotspot Map
         </a>
         <a href="#alertList" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
           Alerts
         </a>
         <a href="#strategicHub" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 0 1 5.3-7.46"/><path d="M20.95 13a9 9 0 0 1-5.3 7.46"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4l3 3" />
+            <path d="M3.05 11a9 9 0 0 1 5.3-7.46" />
+            <path d="M20.95 13a9 9 0 0 1-5.3 7.46" />
+          </svg>
           Intelligence Hub
         </a>
         <a href="#districtDrilldown" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
           District Map
         </a>
         <a href="#crimeHotspots" class="nav-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+          </svg>
           Crime Hotspots
         </a>
       </div>
@@ -73,18 +109,27 @@
       <div>
         <div class="header-pill">
           <span class="live-dot"></span>
-          <span class="eyebrow">Karnataka State Police Datathon 2026</span>
+          <span class="eyebrow">K-SCAN</span>
         </div>
-        <h1>KSP AI-Driven Crime Analytics Platform</h1>
+        <h1>K-SCAN</h1>
         <p class="hero-copy">
           Real-time district drill-down, spatiotemporal hotspot detection, co-accused network analysis,
           occupation correlation, QuickML risk scoring, and natural language AI query assistant over crime store.
         </p>
       </div>
       <div class="hero-badges">
-        <span class="chip chip-success"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Catalyst AppSail</span>
-        <span class="chip chip-info"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ZCQL-Safe Engine</span>
-        <span class="chip chip-warn"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> QuickML + Hosted LLM</span>
+        <span class="chip chip-success"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg> Catalyst AppSail</span>
+        <span class="chip chip-info"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg> ZCQL-Safe Engine</span>
+        <span class="chip chip-warn"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg> QuickML + Hosted LLM</span>
       </div>
     </header>
 
@@ -95,7 +140,8 @@
       </div>
       <div class="control-group">
         <label for="districtSearch">Quick Search</label>
-        <input id="districtSearch" list="districtOptions" type="text" placeholder="Search district or station..." autocomplete="off">
+        <input id="districtSearch" list="districtOptions" type="text" placeholder="Search district or station..."
+          autocomplete="off">
         <datalist id="districtOptions"></datalist>
       </div>
       <div class="control-group">
@@ -119,7 +165,10 @@
         </div>
       </div>
       <div class="control-group actions">
-        <button id="refreshButton" class="primary"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Apply Filters & Run</button>
+        <button id="refreshButton" class="primary"><svg class="btn-icon" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg> Apply Filters & Run</button>
         <button id="resetButton" class="secondary">Reset Filters</button>
       </div>
       <div class="control-group quick-presets">
@@ -169,7 +218,9 @@
         </div>
         <div class="cso-header-badge">
           <span class="chip chip-info">
-            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
             Live Analytics
           </span>
         </div>
@@ -180,13 +231,17 @@
 
         <article class="cso-kpi-card cso-kpi-cyan">
           <div class="cso-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
           </div>
           <div class="cso-kpi-body">
             <div class="cso-kpi-number" id="kpiTotalCrimes">4,287</div>
             <div class="cso-kpi-label">Total Crimes This Month</div>
             <div class="cso-kpi-change cso-change-down" id="kpiTotalCrimesChange">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon">
+                <polyline points="18 15 12 9 6 15" />
+              </svg>
               <span>3.2% vs last month</span>
             </div>
           </div>
@@ -194,13 +249,19 @@
 
         <article class="cso-kpi-card cso-kpi-emerald">
           <div class="cso-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
           </div>
           <div class="cso-kpi-body">
             <div class="cso-kpi-number" id="kpiSolved">2,841</div>
             <div class="cso-kpi-label">Cases Solved</div>
             <div class="cso-kpi-change cso-change-neutral" id="kpiSolvedRate">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
               <span>66.3% clearance rate</span>
             </div>
           </div>
@@ -208,13 +269,19 @@
 
         <article class="cso-kpi-card cso-kpi-amber">
           <div class="cso-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
           </div>
           <div class="cso-kpi-body">
             <div class="cso-kpi-number" id="kpiPending">1,446</div>
             <div class="cso-kpi-label">Pending Investigations</div>
             <div class="cso-kpi-change cso-change-warn" id="kpiPendingDays">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><polyline points="18 9 12 15 6 9"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon">
+                <polyline points="18 9 12 15 6 9" />
+              </svg>
               <span>Avg 12.4 days pending</span>
             </div>
           </div>
@@ -222,13 +289,18 @@
 
         <article class="cso-kpi-card cso-kpi-red">
           <div class="cso-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+            </svg>
           </div>
           <div class="cso-kpi-body">
             <div class="cso-kpi-number" id="kpiHotspots">7</div>
             <div class="cso-kpi-label">Critical Hotspots Active</div>
             <div class="cso-kpi-change cso-change-up" id="kpiHotspotsChange">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon">
+                <polyline points="18 15 12 9 6 15" />
+              </svg>
               <span>+2 since last week</span>
             </div>
           </div>
@@ -299,7 +371,11 @@
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <button id="mapViewToggle" class="map-view-toggle" title="Toggle between Heatmap and Marker view">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="width:15px;height:15px">
+                <path
+                  d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+              </svg>
               Heatmap
             </button>
             <div id="statusText" class="status-pill"><span class="pulse-icon"></span> Syncing dataset...</div>
@@ -354,9 +430,26 @@
             <h2>Co-Accused &amp; Incident Association Network</h2>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <div class="panel-chip"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> vis-network</div>
-            <a href="/assets/network.html" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.35);color:#06b6d4;font:600 .78rem/1 'IBM Plex Mono',monospace;text-decoration:none;transition:background .2s;" onmouseover="this.style.background='rgba(6,182,212,.22)'" onmouseout="this.style.background='rgba(6,182,212,.12)'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="9" cy="9" r="4"/><circle cx="19" cy="4" r="2"/><circle cx="19" cy="19" r="2"/><line x1="13" y1="9" x2="17" y2="4.5"/><line x1="13" y1="10" x2="17" y2="18.5"/></svg>
+            <div class="panel-chip"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg> vis-network</div>
+            <a href="/assets/network.html"
+              style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.35);color:#06b6d4;font:600 .78rem/1 'IBM Plex Mono',monospace;text-decoration:none;transition:background .2s;"
+              onmouseover="this.style.background='rgba(6,182,212,.22)'"
+              onmouseout="this.style.background='rgba(6,182,212,.12)'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="width:14px;height:14px">
+                <circle cx="9" cy="9" r="4" />
+                <circle cx="19" cy="4" r="2" />
+                <circle cx="19" cy="19" r="2" />
+                <line x1="13" y1="9" x2="17" y2="4.5" />
+                <line x1="13" y1="10" x2="17" y2="18.5" />
+              </svg>
               Full Network Analysis →
             </a>
           </div>
@@ -381,7 +474,10 @@
         <div class="ai-grid">
           <article class="mini-card score-card-wrapper">
             <div class="card-head-row">
-              <h3><svg class="heading-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Risk Scoring</h3>
+              <h3><svg class="heading-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg> Risk Scoring</h3>
               <button type="button" class="btn-toggle-json" data-target="riskOutput">Raw JSON</button>
             </div>
             <div id="riskOutput" class="score-card-content">Loading...</div>
@@ -389,7 +485,12 @@
 
           <article class="mini-card score-card-wrapper">
             <div class="card-head-row">
-              <h3><svg class="heading-icon text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Anomaly Detection</h3>
+              <h3><svg class="heading-icon text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg> Anomaly Detection</h3>
               <button type="button" class="btn-toggle-json" data-target="anomalyOutput">Raw JSON</button>
             </div>
             <div id="anomalyOutput" class="score-card-content">Loading...</div>
@@ -408,21 +509,33 @@
           <p class="panel-kicker">Natural Language Query (NLQ)</p>
           <h2>Ask the Crime Database in Plain English</h2>
         </div>
-        <div class="chip chip-info"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Hosted LLM + ZCQL</div>
+        <div class="chip chip-info"><svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg> Hosted LLM + ZCQL</div>
       </div>
 
       <div class="nlq-quick-suggestions">
         <span class="suggestion-label">Try asking:</span>
-        <button type="button" class="chip-suggestion" data-query="Show me theft cases in Bengaluru last month">Theft cases in Bengaluru</button>
-        <button type="button" class="chip-suggestion" data-query="List high severity crimes during night hours">Night curfew incidents</button>
-        <button type="button" class="chip-suggestion" data-query="Show online fraud and cyber crime reports in Mysore">Cyber fraud in Mysore</button>
-        <button type="button" class="chip-suggestion" data-query="Find robbery cases registered in 2025">Robbery cases 2025</button>
+        <button type="button" class="chip-suggestion" data-query="Show me theft cases in Bengaluru last month">Theft
+          cases in Bengaluru</button>
+        <button type="button" class="chip-suggestion" data-query="List high severity crimes during night hours">Night
+          curfew incidents</button>
+        <button type="button" class="chip-suggestion"
+          data-query="Show online fraud and cyber crime reports in Mysore">Cyber fraud in Mysore</button>
+        <button type="button" class="chip-suggestion" data-query="Find robbery cases registered in 2025">Robbery cases
+          2025</button>
       </div>
 
       <div class="nlq-grid">
-        <textarea id="questionInput" rows="3" placeholder="Ask a question e.g. 'Show me theft cases in Bengaluru last month'"></textarea>
+        <textarea id="questionInput" rows="3"
+          placeholder="Ask a question e.g. 'Show me theft cases in Bengaluru last month'"></textarea>
         <div class="nlq-actions">
-          <button id="askButton" class="primary"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Execute Query</button>
+          <button id="askButton" class="primary"><svg class="btn-icon" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg> Execute Query</button>
           <p class="hint">Translates natural questions into safe ZCQL SELECT queries executed directly via Catalyst.</p>
         </div>
       </div>
@@ -430,15 +543,27 @@
       <div class="nlq-result-grid">
         <article class="mini-card nlq-answer-card">
           <div class="nlq-card-head">
-            <h3><svg class="heading-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> AI Answer & Insights</h3>
+            <h3><svg class="heading-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg> AI Answer & Insights</h3>
           </div>
-          <div id="nlqAnswer" class="text-block">Waiting for a question. Select a sample prompt above or enter a query.</div>
+          <div id="nlqAnswer" class="text-block">Waiting for a question. Select a sample prompt above or enter a query.
+          </div>
         </article>
 
         <article class="mini-card nlq-query-card">
           <div class="nlq-card-head">
-            <h3><svg class="heading-icon text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Generated ZCQL Query</h3>
-            <button id="copyQueryBtn" class="btn-copy-code" title="Copy SQL Query"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>
+            <h3><svg class="heading-icon text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg> Generated ZCQL Query</h3>
+            <button id="copyQueryBtn" class="btn-copy-code" title="Copy SQL Query"><svg viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg> Copy</button>
           </div>
           <pre id="nlqQuery" class="code-box">No query generated yet.</pre>
         </article>
@@ -446,7 +571,12 @@
 
       <div class="mini-card nlq-table-card">
         <div class="nlq-card-head">
-          <h3><svg class="heading-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Result Records</h3>
+          <h3><svg class="heading-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="9" y1="21" x2="9" y2="9" />
+            </svg> Result Records</h3>
         </div>
         <div id="nlqRows" class="table-wrap"></div>
       </div>
@@ -461,11 +591,16 @@
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div class="chip chip-warn">
-            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
             AI-Powered
           </div>
           <div class="chip chip-info">
-            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4l3 3" />
+            </svg>
             Live Forecasting
           </div>
           <div id="sihStatus" class="status-pill" style="font-size:0.78rem;">
@@ -483,7 +618,12 @@
         <section class="card sih-sub-panel">
           <div class="sih-sub-head">
             <div class="sih-sub-icon sih-icon-blue">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
             </div>
             <div>
               <p class="panel-kicker" style="font-size:0.65rem;">Layer 1</p>
@@ -498,7 +638,9 @@
         <section class="card sih-sub-panel">
           <div class="sih-sub-head">
             <div class="sih-sub-icon sih-icon-purple">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
             </div>
             <div>
               <p class="panel-kicker" style="font-size:0.65rem;">Layer 2</p>
@@ -513,7 +655,11 @@
         <section class="card sih-sub-panel">
           <div class="sih-sub-head">
             <div class="sih-sub-icon sih-icon-red">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
             </div>
             <div>
               <p class="panel-kicker" style="font-size:0.65rem;">Layer 3</p>
@@ -536,14 +682,19 @@
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div class="chip chip-info">
-            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="3 11 22 2 13 21 11 13 3 11" />
+            </svg>
             Click District → Drill into Stations
           </div>
           <div id="ddmapStatus" class="status-pill" style="font-size:0.78rem;">
             <span class="pulse-icon"></span> Loading map data...
           </div>
           <button id="ddmapResetBtn" class="secondary tiny" title="Reset to statewide view" style="display:none;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
             Reset View
           </button>
         </div>
@@ -582,7 +733,12 @@
           <!-- District Rank List -->
           <div class="ddmap-rank-panel" id="ddmapRankPanel">
             <div class="ddmap-rank-head">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--accent-gold)"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="width:15px;height:15px;color:var(--accent-gold)">
+                <polyline points="18 20 18 10" />
+                <polyline points="12 20 12 4" />
+                <polyline points="6 20 6 14" />
+              </svg>
               <span>District Crime Ranking</span>
             </div>
             <div id="ddmapDistrictList" class="ddmap-rank-list"></div>
@@ -591,7 +747,11 @@
           <!-- Station Detail Panel (shown when a district is drilled into) -->
           <div class="ddmap-station-panel" id="ddmapStationPanel" hidden>
             <div class="ddmap-rank-head">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--accent-cyan)"><path d="M3 21h18M3 7v14M21 7v14M6 21V10M18 21V10M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M12 3L2 7h20L12 3z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="width:15px;height:15px;color:var(--accent-cyan)">
+                <path
+                  d="M3 21h18M3 7v14M21 7v14M6 21V10M18 21V10M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M12 3L2 7h20L12 3z" />
+              </svg>
               <span id="ddmapStationPanelTitle">Station Breakdown</span>
             </div>
             <div id="ddmapStationList" class="ddmap-rank-list"></div>
@@ -600,7 +760,12 @@
           <!-- Crime Type Breakdown -->
           <div class="ddmap-crime-panel" id="ddmapCrimePanel">
             <div class="ddmap-rank-head">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--accent-red)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="width:15px;height:15px;color:var(--accent-red)">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
               <span>Crime Type Distribution</span>
             </div>
             <div id="ddmapCrimeList" class="ddmap-crime-bars"></div>
@@ -619,14 +784,20 @@
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div class="chip chip-info">
-            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
             Leaflet Clusters
           </div>
           <div id="hsStatus" class="status-pill" style="font-size:0.78rem;">
             <span class="pulse-icon"></span> Loading hotspot data...
           </div>
           <button id="hsHeatToggle" class="map-view-toggle" title="Toggle Heatmap / Cluster view">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
+              <path
+                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+            </svg>
             Heatmap
           </button>
         </div>
@@ -635,27 +806,60 @@
       <!-- Time-of-day filter bar -->
       <div class="hs-time-bar">
         <button class="hs-time-btn active" data-slot="all" id="hsSlotAll">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
           All Time
         </button>
         <button class="hs-time-btn" data-slot="dawn" id="hsSlotDawn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="4"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            <circle cx="12" cy="12" r="4" />
+          </svg>
           Dawn <span class="hs-time-range">4–8AM</span>
         </button>
         <button class="hs-time-btn" data-slot="morning" id="hsSlotMorning">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 18a5 5 0 0 0-10 0" />
+            <line x1="12" y1="9" x2="12" y2="2" />
+            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64" />
+            <line x1="1" y1="18" x2="3" y2="18" />
+            <line x1="21" y1="18" x2="23" y2="18" />
+            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22" />
+          </svg>
           Morning <span class="hs-time-range">8AM–12PM</span>
         </button>
         <button class="hs-time-btn" data-slot="afternoon" id="hsSlotAfternoon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
           Afternoon <span class="hs-time-range">12–4PM</span>
         </button>
         <button class="hs-time-btn" data-slot="evening" id="hsSlotEvening">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 18a5 5 0 0 0-10 0" />
+            <line x1="12" y1="9" x2="12" y2="2" />
+            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64" />
+            <line x1="1" y1="18" x2="3" y2="18" />
+            <line x1="21" y1="18" x2="23" y2="18" />
+            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22" />
+          </svg>
           Evening <span class="hs-time-range">4–8PM</span>
         </button>
         <button class="hs-time-btn" data-slot="night" id="hsSlotNight">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
           Night <span class="hs-time-range">8PM–4AM</span>
         </button>
       </div>
@@ -664,9 +868,14 @@
       <div class="hs-filter-row">
         <div class="hs-crime-dropdown-wrap">
           <button class="hs-dropdown-trigger" id="hsCrimeDropdownBtn" aria-expanded="false" aria-haspopup="listbox">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+            </svg>
             <span id="hsCrimeLabel">All Crime Types</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-left:auto"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="width:12px;height:12px;margin-left:auto">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
           <div class="hs-dropdown-panel" id="hsCrimeDropdown" hidden>
             <div class="hs-dropdown-search">
@@ -698,7 +907,11 @@
             <span id="hsLowCount">0</span> Low
           </div>
           <div class="hs-stat-chip" style="margin-left:auto;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:var(--accent-cyan)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="width:13px;height:13px;color:var(--accent-cyan)">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
             <span id="hsTotalVisible">0</span> stations visible
           </div>
         </div>
@@ -711,10 +924,14 @@
         <!-- Severity legend -->
         <div class="hs-legend">
           <div class="hs-legend-title">Severity</div>
-          <div class="hs-legend-row"><span class="hs-legend-dot" style="background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.6);"></span>Critical</div>
-          <div class="hs-legend-row"><span class="hs-legend-dot" style="background:#f97316;box-shadow:0 0 8px rgba(249,115,22,.5);"></span>High</div>
-          <div class="hs-legend-row"><span class="hs-legend-dot" style="background:#eab308;box-shadow:0 0 8px rgba(234,179,8,.5);"></span>Medium</div>
-          <div class="hs-legend-row"><span class="hs-legend-dot" style="background:#06b6d4;box-shadow:0 0 8px rgba(6,182,212,.5);"></span>Low</div>
+          <div class="hs-legend-row"><span class="hs-legend-dot"
+              style="background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.6);"></span>Critical</div>
+          <div class="hs-legend-row"><span class="hs-legend-dot"
+              style="background:#f97316;box-shadow:0 0 8px rgba(249,115,22,.5);"></span>High</div>
+          <div class="hs-legend-row"><span class="hs-legend-dot"
+              style="background:#eab308;box-shadow:0 0 8px rgba(234,179,8,.5);"></span>Medium</div>
+          <div class="hs-legend-row"><span class="hs-legend-dot"
+              style="background:#06b6d4;box-shadow:0 0 8px rgba(6,182,212,.5);"></span>Low</div>
           <div class="hs-legend-divider"></div>
           <div class="hs-legend-title" style="margin-top:2px;">Clusters</div>
           <div class="hs-legend-row"><span class="hs-cluster-swatch" style="background:#16a34a;"></span>&lt; 5</div>
@@ -773,4 +990,5 @@
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <script src="/assets/app.js?v=20260726b"></script>
 </body>
+
 </html>
