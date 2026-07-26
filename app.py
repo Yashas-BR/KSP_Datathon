@@ -22,6 +22,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 from ksp.analytics import (
+    build_crime_hotspots_payload,
     build_dashboard_payload,
     build_district_map_payload,
     build_network_payload,
@@ -157,6 +158,14 @@ def create_app() -> Flask:
             return jsonify(build_district_map_payload(request, days=days))
         except Exception as e:
             logger.error(f"District map endpoint error: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/crime_hotspots")
+    def crime_hotspots():
+        try:
+            return jsonify(build_crime_hotspots_payload(request))
+        except Exception as e:
+            logger.error(f"Crime hotspots endpoint error: {e}")
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/socio_predictive")

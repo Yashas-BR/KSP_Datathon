@@ -2469,4 +2469,441 @@ bootstrap().catch((error) => {
     initCSO();
   }
 })();
+
+/* ════════════════════════════════════════════════════════════════════
+   SPATIOTEMPORAL CRIME HOTSPOTS MODULE
+   Fetches real station-level aggregated crime data from /api/crime_hotspots,
+   renders a Leaflet markercluster map with severity-coded circle markers,
+   time-slot + crime-type filters, and an optional heatmap overlay.
+═══════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe)
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+  }
+
+  const hs = {
+    map: null,
+    clusterGroup: null,
+    heatLayer: null,
+    viewMode: 'cluster',         // 'cluster' | 'heat'
+    rawData: [],                 // all hotspot objects from API
+    allCrimeTypes: [],           // sorted unique crime-type strings
+    selectedCrimeTypes: null,    // null = all; Set<string> = specific subset
+    activeSlot: 'all',           // 'all' | 'dawn' | 'morning' | 'afternoon' | 'evening' | 'night'
+    loaded: false,
+  };
+
+  // ── Severity colour map ───────────────────────────────────────────────────
+  const SEVERITY_COLOR = {
+    critical: '#ef4444',
+    high:     '#f97316',
+    medium:   '#eab308',
+    low:      '#06b6d4',
+  };
+
+  const SEVERITY_GLOW = {
+    critical: 'rgba(239,68,68,.5)',
+    high:     'rgba(249,115,22,.45)',
+    medium:   'rgba(234,179,8,.4)',
+    low:      'rgba(6,182,212,.45)',
+  };
+
+  // ── Marker radius (px) proportional to case count ────────────────────────
+  function markerRadius(count, maxCount) {
+    const minR = 7, maxR = 26;
+    return Math.round(minR + ((count / Math.max(maxCount, 1)) ** 0.55) * (maxR - minR));
+  }
+
+  // ── Cluster colour by total child count ──────────────────────────────────
+  function clusterColor(count) {
+    if (count > 30) return '#dc2626';
+    if (count > 15) return '#ea580c';
+    if (count > 5)  return '#ca8a04';
+    return '#16a34a';
+  }
+
+  // ── Time-slot filter helper ───────────────────────────────────────────────
+  function slotCount(hotspot, slot) {
+    if (slot === 'all') return hotspot.count;
+    return (hotspot.timeSlots && hotspot.timeSlots[slot]) || 0;
+  }
+
+  // ── Apply current filters and redraw ─────────────────────────────────────
+  function applyFilters() {
+    if (!hs.map || !hs.clusterGroup) return;
+
+    hs.clusterGroup.clearLayers();
+
+    const slot  = hs.activeSlot;
+    const types = hs.selectedCrimeTypes; // null = all
+
+    const filtered = hs.rawData.filter(h => {
+      // Time slot filter: skip if slot count is 0
+      if (slot !== 'all' && slotCount(h, slot) === 0) return false;
+      // Crime type filter
+      if (types !== null) {
+        const hasType = h.crimeBreakdown && h.crimeBreakdown.some(c => types.has(c.type));
+        if (!hasType) return false;
+      }
+      return true;
+    });
+
+    const maxCount = filtered.reduce((m, h) => Math.max(m, slot === 'all' ? h.count : slotCount(h, slot)), 1);
+
+    const heatPoints = [];
+    let cCritical = 0, cHigh = 0, cMedium = 0, cLow = 0;
+
+    filtered.forEach(h => {
+      const displayCount = slot === 'all' ? h.count : slotCount(h, slot);
+      const sev = h.severity;
+      const color = SEVERITY_COLOR[sev] || '#06b6d4';
+      const glow  = SEVERITY_GLOW[sev]  || 'rgba(6,182,212,.4)';
+      const r = markerRadius(displayCount, maxCount);
+
+      if (sev === 'critical') cCritical++;
+      else if (sev === 'high') cHigh++;
+      else if (sev === 'medium') cMedium++;
+      else cLow++;
+
+      // Circle marker
+      const circle = L.circleMarker([h.lat, h.lng], {
+        radius: r,
+        fillColor: color,
+        color: 'rgba(255,255,255,0.35)',
+        weight: 1.5,
+        fillOpacity: 0.82,
+        className: `hs-circle-marker hs-sev-${sev}`,
+      });
+
+      // ── Popup HTML ───────────────────────────────────────────────────────
+      const badgeColors = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#06b6d4' };
+      const sevBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:${badgeColors[sev]}22;border:1px solid ${badgeColors[sev]}66;color:${badgeColors[sev]};font:600 0.72rem/1 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;">${sev}</span>`;
+
+      const slotLabel = { all:'All day', dawn:'Dawn 4–8AM', morning:'Morning 8AM–12PM', afternoon:'Afternoon 12–4PM', evening:'Evening 4–8PM', night:'Night 8PM–4AM' };
+      const peakLabel = slotLabel[h.peakTimeSlot] || h.peakTimeSlot;
+
+      const crimeRows = (h.crimeBreakdown || []).slice(0, 5).map(c =>
+        `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(148,163,184,.08);">
+          <span style="color:#94a3b8;font-size:0.77rem;">${escapeHtml(c.type)}</span>
+          <span style="color:#f8fafc;font-weight:600;font-size:0.77rem;">${c.count}</span>
+        </div>`
+      ).join('');
+
+      const totalDisplay = slot === 'all' ? h.count : displayCount;
+      const windowLabel = slot === 'all' ? 'Total' : slotLabel[slot];
+
+      const popupHtml = `
+        <div style="font-family:'Inter',sans-serif;padding:16px 18px 14px;">
+          <div style="margin-bottom:10px;">
+            <div style="color:#94a3b8;font:600 0.63rem/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">${escapeHtml(h.districtName)}</div>
+            <div style="font:700 1rem/1.2 'Space Grotesk',sans-serif;color:#f8fafc;margin-bottom:6px;">${escapeHtml(h.stationName)}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">${sevBadge}<span style="color:#94a3b8;font-size:0.78rem;">📍 Nearby Station</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;">
+              <div style="color:#94a3b8;font-size:0.68rem;margin-bottom:2px;">${windowLabel} Cases</div>
+              <div style="font:700 1.3rem/1 'Space Grotesk',sans-serif;color:${color};">${totalDisplay.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;">
+              <div style="color:#94a3b8;font-size:0.68rem;margin-bottom:2px;">Peak Time</div>
+              <div style="font:600 0.78rem/1.3 'Inter',sans-serif;color:#f8fafc;">${escapeHtml(peakLabel)}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:4px;color:#94a3b8;font:600 0.68rem/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;">Crime Breakdown</div>
+          <div>${crimeRows}</div>
+          <div style="margin-top:10px;font-size:0.73rem;color:#475569;">
+            Heinous offences: <strong style="color:#ef4444;">${h.heinousCount || 0}</strong>
+            &nbsp;·&nbsp; Top type: <strong style="color:#f8fafc;">${escapeHtml(h.topCrimeType)}</strong>
+          </div>
+        </div>`;
+
+      circle.bindPopup(popupHtml, {
+        className: 'hs-popup',
+        maxWidth: 310,
+      });
+
+      hs.clusterGroup.addLayer(circle);
+
+      // Heatmap points
+      heatPoints.push([h.lat, h.lng, h.heatWeight || (displayCount / maxCount)]);
+    });
+
+    // Update heatmap data
+    if (hs.heatLayer) {
+      hs.heatLayer.setLatLngs(heatPoints);
+    }
+
+    // Update counter chips
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setText('hsCriticalCount', cCritical);
+    setText('hsHighCount', cHigh);
+    setText('hsMediumCount', cMedium);
+    setText('hsLowCount', cLow);
+    setText('hsTotalVisible', filtered.length);
+  }
+
+  // ── Initialise Leaflet map ────────────────────────────────────────────────
+  function initHsMap() {
+    if (hs.map) return;
+
+    const el = document.getElementById('hsMapCanvas');
+    if (!el) return;
+
+    hs.map = L.map('hsMapCanvas', { zoomControl: true, preferCanvas: true })
+              .setView([15.3173, 75.7139], 7); // Karnataka centre
+
+    // CartoDB dark tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(hs.map);
+
+    // MarkerCluster with custom icon factory
+    if (typeof L.markerClusterGroup === 'function') {
+      hs.clusterGroup = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        disableClusteringAtZoom: 13,
+        maxClusterRadius: 60,
+        iconCreateFunction(cluster) {
+          const count = cluster.getChildCount();
+          const bg = clusterColor(count);
+          const size = count > 30 ? 46 : count > 15 ? 40 : count > 5 ? 34 : 28;
+          return L.divIcon({
+            html: `<div class="hs-cluster-icon" style="width:${size}px;height:${size}px;background:${bg};font-size:${size > 38 ? '0.82rem' : '0.72rem'};">${count}</div>`,
+            className: '',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
+          });
+        },
+      });
+    } else {
+      hs.clusterGroup = L.layerGroup();
+    }
+    hs.clusterGroup.addTo(hs.map);
+
+    // Heatmap layer
+    if (typeof L.heatLayer === 'function') {
+      hs.heatLayer = L.heatLayer([], {
+        radius: 40,
+        blur: 28,
+        maxZoom: 13,
+        max: 1.0,
+        gradient: { 0.0: '#00c853', 0.3: '#76ff03', 0.5: '#ffd600', 0.7: '#ff6d00', 1.0: '#d50000' },
+      });
+    }
+
+    // ── Heatmap toggle ──────────────────────────────────────────────────────
+    const toggleBtn = document.getElementById('hsHeatToggle');
+    const heatLegend = document.getElementById('hsHeatLegend');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        if (hs.viewMode === 'cluster') {
+          hs.viewMode = 'heat';
+          hs.map.removeLayer(hs.clusterGroup);
+          if (hs.heatLayer) hs.heatLayer.addTo(hs.map);
+          toggleBtn.classList.add('active');
+          toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><circle cx="12" cy="11" r="3"/><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"/></svg> Clusters`;
+          if (heatLegend) heatLegend.removeAttribute('hidden');
+        } else {
+          hs.viewMode = 'cluster';
+          if (hs.heatLayer && hs.map.hasLayer(hs.heatLayer)) hs.map.removeLayer(hs.heatLayer);
+          hs.clusterGroup.addTo(hs.map);
+          toggleBtn.classList.remove('active');
+          toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Heatmap`;
+          if (heatLegend) heatLegend.setAttribute('hidden', '');
+        }
+      });
+    }
+  }
+
+  // ── Crime-type dropdown logic ─────────────────────────────────────────────
+  function buildCrimeDropdown(types) {
+    hs.allCrimeTypes = types;
+    const list = document.getElementById('hsCrimeList');
+    if (!list) return;
+
+    function renderItems(query) {
+      const q = (query || '').trim().toLowerCase();
+      const filtered = q ? types.filter(t => t.toLowerCase().includes(q)) : types;
+      list.innerHTML = filtered.map(t => {
+        const sel = hs.selectedCrimeTypes === null || hs.selectedCrimeTypes.has(t);
+        return `<div class="hs-dropdown-item${sel ? ' selected' : ''}" data-type="${escapeHtml(t)}">
+          <div class="hs-dropdown-check"></div>
+          <span>${escapeHtml(t)}</span>
+        </div>`;
+      }).join('');
+
+      list.querySelectorAll('.hs-dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const type = item.getAttribute('data-type');
+          if (hs.selectedCrimeTypes === null) {
+            // Move from "all" to "specific"
+            hs.selectedCrimeTypes = new Set(hs.allCrimeTypes);
+            hs.selectedCrimeTypes.delete(type);
+          } else {
+            if (hs.selectedCrimeTypes.has(type)) {
+              hs.selectedCrimeTypes.delete(type);
+            } else {
+              hs.selectedCrimeTypes.add(type);
+              // If all selected, reset to null (= all)
+              if (hs.selectedCrimeTypes.size === hs.allCrimeTypes.length) hs.selectedCrimeTypes = null;
+            }
+          }
+          item.classList.toggle('selected', hs.selectedCrimeTypes === null || hs.selectedCrimeTypes.has(type));
+          item.querySelector('.hs-dropdown-check').classList.toggle('selected', item.classList.contains('selected'));
+          updateDropdownLabel();
+        });
+      });
+    }
+
+    renderItems('');
+
+    const searchInput = document.getElementById('hsCrimeSearch');
+    if (searchInput) searchInput.addEventListener('input', e => renderItems(e.target.value));
+
+    const selectAllBtn = document.getElementById('hsCrimeSelectAll');
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', () => {
+        hs.selectedCrimeTypes = null;
+        renderItems(searchInput ? searchInput.value : '');
+        updateDropdownLabel();
+      });
+    }
+
+    const clearBtn = document.getElementById('hsCrimeClear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        hs.selectedCrimeTypes = new Set();
+        renderItems(searchInput ? searchInput.value : '');
+        updateDropdownLabel();
+      });
+    }
+
+    const applyBtn = document.getElementById('hsCrimeApply');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        closeDropdown();
+        applyFilters();
+      });
+    }
+  }
+
+  function updateDropdownLabel() {
+    const label = document.getElementById('hsCrimeLabel');
+    if (!label) return;
+    if (hs.selectedCrimeTypes === null) {
+      label.textContent = 'All Crime Types';
+    } else if (hs.selectedCrimeTypes.size === 0) {
+      label.textContent = 'No Types Selected';
+    } else {
+      label.textContent = `${hs.selectedCrimeTypes.size} Type${hs.selectedCrimeTypes.size > 1 ? 's' : ''} Selected`;
+    }
+  }
+
+  function closeDropdown() {
+    const panel = document.getElementById('hsCrimeDropdown');
+    const btn   = document.getElementById('hsCrimeDropdownBtn');
+    if (panel) panel.hidden = true;
+    if (btn)   btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function openDropdown() {
+    const panel = document.getElementById('hsCrimeDropdown');
+    const btn   = document.getElementById('hsCrimeDropdownBtn');
+    if (panel) panel.hidden = false;
+    if (btn)   btn.setAttribute('aria-expanded', 'true');
+  }
+
+  // ── Wire up time-slot buttons ─────────────────────────────────────────────
+  function wireTimeButtons() {
+    document.querySelectorAll('.hs-time-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        hs.activeSlot = btn.getAttribute('data-slot') || 'all';
+        document.querySelectorAll('.hs-time-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+      });
+    });
+  }
+
+  // ── Wire up dropdown trigger ──────────────────────────────────────────────
+  function wireDropdown() {
+    const btn = document.getElementById('hsCrimeDropdownBtn');
+    if (btn) {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const panel = document.getElementById('hsCrimeDropdown');
+        if (panel && panel.hidden) openDropdown();
+        else closeDropdown();
+      });
+    }
+    document.addEventListener('click', e => {
+      const wrap = document.querySelector('.hs-crime-dropdown-wrap');
+      if (wrap && !wrap.contains(e.target)) closeDropdown();
+    });
+  }
+
+  // ── Fetch data from /api/crime_hotspots ──────────────────────────────────
+  async function loadHotspotData() {
+    const statusEl = document.getElementById('hsStatus');
+    if (statusEl) statusEl.innerHTML = '<span class="pulse-icon"></span> Loading hotspot data...';
+
+    try {
+      const BASE = (window.BACKEND_URL || window.location.origin || '').replace(/\/$/, '');
+      const res  = await fetch(`${BASE}/api/crime_hotspots`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+
+      hs.rawData = (json.hotspots || []);
+
+      // Collect all unique crime types
+      const typeSet = new Set();
+      hs.rawData.forEach(h => (h.crimeBreakdown || []).forEach(c => typeSet.add(c.type)));
+      const sortedTypes = [...typeSet].sort();
+
+      // Init map & controls
+      initHsMap();
+      wireTimeButtons();
+      wireDropdown();
+      buildCrimeDropdown(sortedTypes);
+
+      // Initial render
+      applyFilters();
+
+      // Fit bounds
+      if (hs.rawData.length && hs.map) {
+        const pts = hs.rawData.map(h => [h.lat, h.lng]);
+        hs.map.fitBounds(pts, { padding: [40, 40], maxZoom: 10 });
+      }
+
+      const total = json.totalCases || hs.rawData.length;
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="live-dot"></span> ${hs.rawData.length} stations · ${total.toLocaleString('en-IN')} cases loaded`;
+      }
+      hs.loaded = true;
+
+    } catch (err) {
+      console.error('[Crime Hotspots]', err);
+      if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">⚠ Failed to load hotspot data</span>';
+    }
+  }
+
+  // ── Bootstrap on DOM ready ───────────────────────────────────────────────
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadHotspotData);
+  } else {
+    loadHotspotData();
+  }
+})();
 
