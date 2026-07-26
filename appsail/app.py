@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import os
-import re
 import logging
 
 from flask import Flask, jsonify, request
-from flask_cors import CORS
 
 from ksp.analytics import (
     build_crime_hotspots_payload,
@@ -29,15 +27,8 @@ logger = logging.getLogger("ksp-app")
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    CORS(app, origins=[
-        re.compile(r"^https?://localhost(:\d+)?$"),
-        re.compile(r"^https?://127\.0\.0\.1(:\d+)?$"),
-        re.compile(r"^https://.*\.catalystserverless\.in$"),
-        re.compile(r"^https://.*\.catalystappsail\.in$"),
-    ])
-
     @app.after_request
-    def log_req(response):
+    def after(response):
         print(f"[{request.method}] {request.path} {response.status_code}", flush=True)
         return response
 

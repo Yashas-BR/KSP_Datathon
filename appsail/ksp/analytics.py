@@ -25,10 +25,17 @@ def _crime_label(case: Dict) -> str:
 # ── Meta / lookups ────────────────────────────────────────────────────────────
 
 def build_station_lookup_payload(request, district_id: Optional[int] = None) -> Dict:
-    districts = [{"id": d["DistrictID"], "name": d["DistrictName"]} for d in get_districts()]
+    districts = [
+        {"id": d["DistrictID"], "name": d["DistrictName"],
+         "districtId": d["DistrictID"], "districtName": d["DistrictName"]}
+        for d in get_districts()
+    ]
     units = get_units()
+    dbi = district_by_id()
     stations = [
-        {"id": u["UnitID"], "name": u["UnitName"], "districtId": u["DistrictID"]}
+        {"id": u["UnitID"], "name": u["UnitName"], "districtId": u["DistrictID"],
+         "stationId": u["UnitID"], "stationName": u["UnitName"],
+         "districtName": dbi.get(u["DistrictID"], "")}
         for u in units
         if not district_id or str(u.get("DistrictID", "")) == str(district_id)
     ]
@@ -45,26 +52,62 @@ def build_dashboard_payload(request, district_id=None, days=365, hour=None) -> D
     hourly: Dict[int, int] = defaultdict(int)
     markers = []
 
+    uby = unit_by_id()
+    dbi = district_by_id()
+    dist_set = set()
+    station_set = set()
+
     for c in cases:
         crime_c[_crime_label(c)] += 1
         status_c[status_by_id().get(c.get("CaseStatusID", ""), "Unknown")] += 1
         dt = parse_date(c.get("IncidentFromDate", ""))
         if dt:
             monthly[dt.strftime("%Y-%m")] += 1
-        idt = parse_date(c.get("IncidentFromDate", ""))
-        if idt:
-            hourly[idt.hour] += 1
+            hourly[dt.hour] += 1
+        sid = c.get("PoliceStationID", "")
+        unit = uby.get(sid, {})
+        did = unit.get("districtId", "")
+        dist_set.add(did)
+        station_set.add(sid)
         try:
             lat, lng = float(c.get("latitude", 0)), float(c.get("longitude", 0))
             if lat and lng:
                 markers.append({
-                    "lat": lat, "lng": lng,
-                    "crime": _crime_label(c),
-                    "date": c.get("CrimeRegisteredDate", ""),
-                    "caseId": c.get("Casemasterid", ""),
+                    "lat": lat, "lng": lng, "latitude": lat, "longitude": lng,
+                    "crime": _crime_label(c), "crimeName": _crime_label(c),
+                    "date": c.get("IncidentFromDate", ""), "registeredDate": c.get("IncidentFromDate", ""),
+                    "caseId": c.get("Casemasterid", ""), "crimeNo": c.get("Casemasterid", ""),
+                    "stationId": sid, "districtId": did,
+                    "stationName": unit.get("name", ""),
+                    "districtName": dbi.get(did, ""),
+                    "facts": "", "severity": "Recorded",
                 })
         except (ValueError, TypeError):
             pass
+
+    # Build hotspots from top station clusters
+    station_counts: Counter = Counter(c.get("PoliceStationID", "") for c in cases)
+    avg = len(cases) / max(len(station_counts), 1)
+    hotspots = []
+    alerts = []
+    for sid, cnt in station_counts.most_common(20):
+        unit = uby.get(sid, {})
+        did = unit.get("districtId", "")
+        hotspots.append({
+            "stationId": sid, "districtId": did,
+            "stationName": unit.get("name", ""),
+            "districtName": dbi.get(did, ""),
+            "caseCount": cnt, "hour": 0, "topCrimeType": "", "severity": cnt,
+        })
+        if cnt > avg * 2:
+            alerts.append({
+                "stationId": sid, "districtId": did,
+                "stationName": unit.get("name", ""),
+                "districtName": dbi.get(did, ""),
+                "crimeName": "", "observedCount": cnt,
+                "expectedCount": round(avg, 1), "zScore": round((cnt - avg) / max(avg ** 0.5, 1), 1),
+                "severity": "high",
+            })
 
     return {
         "dashboard": {
@@ -74,6 +117,21 @@ def build_dashboard_payload(request, district_id=None, days=365, hour=None) -> D
             "hourlyDistribution": [{"hour": h, "count": hourly[h]} for h in range(24)],
             "statusDistribution": [{"status": k, "count": v} for k, v in status_c.most_common()],
             "markers": markers[:500],
+            "hotspots": hotspots,
+            "alerts": alerts,
+            "totals": {
+                "cases": len(cases),
+                "districts": len(dist_set),
+                "stations": len(station_set),
+                "hotspots": len(hotspots),
+                "alerts": len(alerts),
+            },
+            "summary": {
+                "hourCounts": [[h, hourly[h]] for h in range(24)],
+                "crimeCounts": [[k, v] for k, v in crime_c.most_common(10)],
+                "districtCounts": [],
+            },
+            "windowDays": days,
         }
     }
 
