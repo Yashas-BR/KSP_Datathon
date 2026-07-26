@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <link rel="stylesheet" href="/assets/style.css">
@@ -153,6 +154,137 @@
     </section>
 
     <section class="stats-grid" id="statCards"></section>
+
+    <!-- ── Crime Statistics Overview ── -->
+    <section class="card cso-panel" id="crimeStatsOverview">
+      <div class="cso-header">
+        <div>
+          <p class="panel-kicker">Intelligence Dashboard</p>
+          <h2 class="cso-title">Crime Statistics Overview</h2>
+          <p class="cso-subtitle">Comprehensive metrics across all districts</p>
+        </div>
+        <div class="cso-header-badge">
+          <span class="chip chip-info">
+            <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Live Analytics
+          </span>
+        </div>
+      </div>
+
+      <!-- Row 1: KPI Cards -->
+      <div class="cso-kpi-row">
+
+        <article class="cso-kpi-card cso-kpi-cyan">
+          <div class="cso-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="cso-kpi-body">
+            <div class="cso-kpi-number" id="kpiTotalCrimes">4,287</div>
+            <div class="cso-kpi-label">Total Crimes This Month</div>
+            <div class="cso-kpi-change cso-change-down" id="kpiTotalCrimesChange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><polyline points="18 15 12 9 6 15"/></svg>
+              <span>3.2% vs last month</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="cso-kpi-card cso-kpi-emerald">
+          <div class="cso-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="cso-kpi-body">
+            <div class="cso-kpi-number" id="kpiSolved">2,841</div>
+            <div class="cso-kpi-label">Cases Solved</div>
+            <div class="cso-kpi-change cso-change-neutral" id="kpiSolvedRate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>66.3% clearance rate</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="cso-kpi-card cso-kpi-amber">
+          <div class="cso-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="cso-kpi-body">
+            <div class="cso-kpi-number" id="kpiPending">1,446</div>
+            <div class="cso-kpi-label">Pending Investigations</div>
+            <div class="cso-kpi-change cso-change-warn" id="kpiPendingDays">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><polyline points="18 9 12 15 6 9"/></svg>
+              <span>Avg 12.4 days pending</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="cso-kpi-card cso-kpi-red">
+          <div class="cso-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          </div>
+          <div class="cso-kpi-body">
+            <div class="cso-kpi-number" id="kpiHotspots">7</div>
+            <div class="cso-kpi-label">Critical Hotspots Active</div>
+            <div class="cso-kpi-change cso-change-up" id="kpiHotspotsChange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cso-arrow-icon"><polyline points="18 15 12 9 6 15"/></svg>
+              <span>+2 since last week</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Row 2: Charts -->
+      <div class="cso-charts-row">
+        <div class="cso-chart-card">
+          <div class="cso-chart-head">
+            <p class="panel-kicker">Distribution</p>
+            <h3 class="cso-chart-title">Crime by Category</h3>
+          </div>
+          <div class="cso-chart-wrap">
+            <canvas id="csoCategoryChart"></canvas>
+          </div>
+        </div>
+
+        <div class="cso-chart-card">
+          <div class="cso-chart-head">
+            <p class="panel-kicker">Temporal Analysis</p>
+            <h3 class="cso-chart-title">Month-over-Month Trend</h3>
+          </div>
+          <div class="cso-chart-wrap">
+            <canvas id="csoTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: District Comparison Table -->
+      <div class="cso-table-section">
+        <div class="cso-table-head">
+          <div>
+            <p class="panel-kicker">District Intelligence</p>
+            <h3 class="cso-chart-title">District Performance Comparison</h3>
+          </div>
+          <div class="cso-table-legend">
+            <span class="cso-legend-item"><span class="cso-status-dot cso-dot-green"></span>Normal</span>
+            <span class="cso-legend-item"><span class="cso-status-dot cso-dot-yellow"></span>Watch</span>
+            <span class="cso-legend-item"><span class="cso-status-dot cso-dot-red"></span>Alert</span>
+          </div>
+        </div>
+        <div class="cso-table-wrap">
+          <table class="cso-district-table" id="csoDistrictTable">
+            <thead>
+              <tr>
+                <th>District</th>
+                <th>Total Crimes</th>
+                <th>Solved</th>
+                <th>Pending</th>
+                <th>Clearance Rate</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="csoDistrictTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
     <main class="workspace">
       <section class="card map-panel">
