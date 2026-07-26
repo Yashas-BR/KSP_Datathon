@@ -2186,4 +2186,287 @@ bootstrap().catch((error) => {
     // Fallback: load after main bootstrap settles
     setTimeout(loadDdMap, 1200);
   }
-})();
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   CRIME STATISTICS OVERVIEW — Self-contained IIFE module
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ── Shared Chart.js dark theme defaults ─────────────────────── */
+  const CHART_FONT = "'IBM Plex Mono', 'Inter', monospace";
+  const GRID_COLOR = 'rgba(148,163,184,0.10)';
+  const TICK_COLOR = '#64748b';
+  const LABEL_COLOR = '#94a3b8';
+
+  function applyDarkDefaults() {
+    if (typeof Chart === 'undefined') return;
+    Chart.defaults.color = LABEL_COLOR;
+    Chart.defaults.font.family = CHART_FONT;
+    Chart.defaults.font.size = 11;
+    Chart.defaults.plugins.legend.labels.color = LABEL_COLOR;
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(9,13,22,0.95)';
+    Chart.defaults.plugins.tooltip.borderColor = 'rgba(6,182,212,0.35)';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.titleColor = '#f8fafc';
+    Chart.defaults.plugins.tooltip.bodyColor = '#94a3b8';
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+  }
+
+  /* ── 1. Crime by Category — horizontal bar chart ─────────────── */
+  function initCategoryChart() {
+    const canvas = document.getElementById('csoCategoryChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const categories = ['Theft', 'Assault', 'Robbery', 'Snatching', 'Fraud', 'Vandalism', 'Burglary', 'Cyber Crime'];
+    const counts     = [1142,    874,       563,       421,        388,     267,        214,       418];
+
+    // Gradient from cyan → teal
+    const ctx = canvas.getContext('2d');
+    const totalBars = categories.length;
+    const barColors = categories.map((_, i) => {
+      const t = i / (totalBars - 1);
+      const r = Math.round(6   + t * (13  - 6));
+      const g = Math.round(182 + t * (148 - 182));
+      const b = Math.round(212 + t * (189 - 212));
+      return `rgba(${r},${g},${b},0.85)`;
+    });
+    const hoverColors = barColors.map(c => c.replace('0.85', '1'));
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: categories,
+        datasets: [{
+          label: 'Incidents',
+          data: counts,
+          backgroundColor: barColors,
+          hoverBackgroundColor: hoverColors,
+          borderRadius: 5,
+          borderSkipped: false,
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 900, easing: 'easeOutQuart' },
+        layout: { padding: { right: 10 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.parsed.x.toLocaleString('en-IN')} cases`,
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: GRID_COLOR, drawBorder: false },
+            border: { display: false },
+            ticks: {
+              color: TICK_COLOR,
+              callback: v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v,
+            }
+          },
+          y: {
+            grid: { display: false, drawBorder: false },
+            border: { display: false },
+            ticks: { color: '#cbd5e1', font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  /* ── 2. Month-over-Month Trend — line chart ──────────────────── */
+  function initTrendChart() {
+    const canvas = document.getElementById('csoTrendChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const months     = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+    const thisYear   = [3980, 4210, 4430, 4185, 4430, 4287];
+    const lastYear   = [3620, 3850, 4100, 3975, 4060, 3920];
+
+    const ctx = canvas.getContext('2d');
+
+    // Gradient fill under this-year line
+    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+    gradient.addColorStop(0,   'rgba(6,182,212,0.28)');
+    gradient.addColorStop(0.6, 'rgba(6,182,212,0.06)');
+    gradient.addColorStop(1,   'rgba(6,182,212,0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'This Year',
+            data: thisYear,
+            borderColor: '#06b6d4',
+            borderWidth: 2.5,
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#06b6d4',
+            pointBorderColor: '#090d16',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          },
+          {
+            label: 'Last Year',
+            data: lastYear,
+            borderColor: 'rgba(148,163,184,0.5)',
+            borderWidth: 1.8,
+            borderDash: [5, 4],
+            backgroundColor: 'transparent',
+            fill: false,
+            tension: 0.4,
+            pointBackgroundColor: 'rgba(148,163,184,0.5)',
+            pointBorderColor: '#090d16',
+            pointBorderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 900, easing: 'easeOutQuart' },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            align: 'end',
+            labels: {
+              boxWidth: 14,
+              boxHeight: 2,
+              usePointStyle: true,
+              pointStyle: 'line',
+              color: LABEL_COLOR,
+              font: { size: 11 },
+              padding: 16,
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('en-IN')} crimes`,
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: GRID_COLOR, drawBorder: false },
+            border: { display: false },
+            ticks: { color: TICK_COLOR }
+          },
+          y: {
+            grid: { color: GRID_COLOR, drawBorder: false },
+            border: { display: false },
+            ticks: {
+              color: TICK_COLOR,
+              callback: v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v,
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /* ── 3. District Comparison Table ───────────────────────────── */
+  const DISTRICT_DATA = [
+    { name: 'Bengaluru City',  total: 8142, solved: 5102, status: 'alert'  },
+    { name: 'Mysuru',          total: 4231, solved: 2987, status: 'watch'  },
+    { name: 'Kalaburagi',      total: 3870, solved: 2213, status: 'alert'  },
+    { name: 'Belagavi',        total: 3541, solved: 2486, status: 'watch'  },
+    { name: 'Shivamogga',      total: 2894, solved: 2183, status: 'normal' },
+    { name: 'Davanagere',      total: 2647, solved: 1852, status: 'normal' },
+    { name: 'Hubballi-Dharwad',total: 2398, solved: 1531, status: 'watch'  },
+    { name: 'Mangaluru',       total: 2154, solved: 1720, status: 'normal' },
+    { name: 'Tumakuru',        total: 1987, solved: 1347, status: 'normal' },
+    { name: 'Vijayapura',      total: 1762, solved: 1012, status: 'alert'  },
+  ].map(d => ({ ...d, pending: d.total - d.solved, rate: Math.round((d.solved / d.total) * 1000) / 10 }));
+
+  function statusConfig(s) {
+    if (s === 'alert')  return { cls: 'cso-dot-red',    label: 'Alert',  color: '#f87171' };
+    if (s === 'watch')  return { cls: 'cso-dot-yellow', label: 'Watch',  color: '#fbbf24' };
+    return                     { cls: 'cso-dot-green',  label: 'Normal', color: '#34d399' };
+  }
+
+  function rateClass(rate) {
+    if (rate >= 60) return 'cso-rate-high';
+    if (rate >= 40) return 'cso-rate-mid';
+    return 'cso-rate-low';
+  }
+
+  function fmt(n) {
+    return n.toLocaleString('en-IN');
+  }
+
+  function initDistrictTable() {
+    const tbody = document.getElementById('csoDistrictTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = DISTRICT_DATA.map(d => {
+      const sc  = statusConfig(d.status);
+      const rc  = rateClass(d.rate);
+      const pct = d.rate.toFixed(1);
+      return `
+        <tr>
+          <td class="cso-td-district">${d.name}</td>
+          <td class="cso-td-count">${fmt(d.total)}</td>
+          <td class="cso-td-count" style="color:#34d399">${fmt(d.solved)}</td>
+          <td class="cso-td-count" style="color:#fbbf24">${fmt(d.pending)}</td>
+          <td>
+            <div class="cso-progress-wrap">
+              <div class="cso-progress-track">
+                <div class="cso-progress-fill ${rc}" style="width:${pct}%"></div>
+              </div>
+              <span class="cso-progress-pct">${pct}%</span>
+            </div>
+          </td>
+          <td>
+            <div class="cso-td-status" style="color:${sc.color}">
+              <span class="cso-status-dot ${sc.cls}"></span>
+              ${sc.label}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── Bootstrap ───────────────────────────────────────────────── */
+  function initCSO() {
+    if (typeof Chart === 'undefined') {
+      // Chart.js might still be loading — retry once
+      setTimeout(initCSOCharts, 600);
+    } else {
+      initCSOCharts();
+    }
+    initDistrictTable();
+  }
+
+  function initCSOCharts() {
+    if (typeof Chart === 'undefined') {
+      console.warn('[CSO] Chart.js not available — charts skipped.');
+      return;
+    }
+    applyDarkDefaults();
+    initCategoryChart();
+    initTrendChart();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCSO);
+  } else {
+    initCSO();
+  }
+})();
+
