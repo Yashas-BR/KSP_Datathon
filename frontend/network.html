@@ -490,8 +490,9 @@
         if(!r.ok) throw new Error('HTTP '+r.status);
         const d=await r.json();
         if(d.error) throw new Error(d.error);
-        data=d;
-        renderAll(d);
+        const payload = d.network || d;
+        data=payload;
+        renderAll(payload);
       }catch(e){ toast('Error: '+e.message,true); g('emptyState').style.display='flex'; }
       finally{ showLoad(false); }
     }
@@ -743,7 +744,7 @@
 
     g('physicsBtn').addEventListener('click',()=>{
       physics=!physics;
-      if(net) net.setOptions({physics:{enabled:physics}});
+      if(net) net.setOptions({physics: physics});
       g('physicsBtn').innerHTML=(physics
         ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> Physics ON'
         :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Physics OFF');

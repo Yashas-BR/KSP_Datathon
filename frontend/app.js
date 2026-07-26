@@ -696,8 +696,8 @@ async function renderCompareMode() {
   ]);
   els.comparePanel.hidden = false;
   els.compareGrid.innerHTML = [
-    renderCompareCard(findDistrictName(state.compareDistrictA), aPayload),
-    renderCompareCard(findDistrictName(state.compareDistrictB), bPayload),
+    renderCompareCard(findDistrictName(state.compareDistrictA), aPayload.dashboard || aPayload),
+    renderCompareCard(findDistrictName(state.compareDistrictB), bPayload.dashboard || bPayload),
   ].join('');
 }
 
@@ -1236,21 +1236,28 @@ async function refreshAll() {
       fetchQuickML('/api/ml/anomaly', { district_id: state.selectedDistrictId, days: state.days }),
     ]);
 
-    state.dashboard = dashboard;
-    state.trends = trends;
-    state.network = network;
-    state.correlations = correlations;
-    state.topDistrictIds = (dashboard.summary?.districtCounts || []).slice(0, 10).map((item) => Number(item.districtId));
 
-    renderStatCards(dashboard);
+
+    // Unwrap API response envelope keys before passing to renderers
+    const dashPayload = dashboard.dashboard || dashboard;
+    const networkPayload = network.network || network;
+    const corrPayload = correlations.correlations || correlations;
+
+    state.dashboard = dashPayload;
+    state.trends = trends;
+    state.network = networkPayload;
+    state.correlations = corrPayload;
+    state.topDistrictIds = (dashPayload.summary?.districtCounts || []).slice(0, 10).map((item) => Number(item.districtId));
+
+    renderStatCards(dashPayload);
     renderDistrictTree(state.meta?.unitTree || []);
-    renderHotspots(dashboard.hotspots || []);
-    renderAlerts(dashboard.alerts || []);
-    renderTimeline(dashboard.summary?.hourCounts || []);
-    renderMap(dashboard);
-    renderNetwork(network);
-    renderRepeatOffenders(network);
-    renderCorrelations(correlations);
+    renderHotspots(dashPayload.hotspots || []);
+    renderAlerts(dashPayload.alerts || []);
+    renderTimeline(dashPayload.summary?.hourCounts || []);
+    renderMap(dashPayload);
+    renderNetwork(networkPayload);
+    renderRepeatOffenders(networkPayload);
+    renderCorrelations(corrPayload);
 
     renderQuickMLRiskScorecard(els.riskOutput, risk);
     renderQuickMLAnomalyScorecard(els.anomalyOutput, anomaly);
@@ -2043,7 +2050,7 @@ bootstrap().catch((error) => {
     // Done in background so it doesn't block the map render above.
     try {
       const distPayload = await api(`/api/dashboard?district_id=${district.districtId}&days=${ddState.days}`);
-      ddState.districtMarkers = distPayload.markers || [];
+      ddState.districtMarkers = (distPayload.dashboard || distPayload).markers || [];
     } catch (err) {
       console.warn('Could not fetch district markers for case browser:', err);
       ddState.districtMarkers = [];

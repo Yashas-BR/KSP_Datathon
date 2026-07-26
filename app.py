@@ -74,6 +74,10 @@ def create_app() -> Flask:
     @app.after_request
     def log_request_info(response):
         print(f" -> [{request.method}] {request.path} {response.status_code}", flush=True)
+        # Disable caching for frontend files to ensure users get the latest JS
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         return response
 
     @app.route("/health", methods=["GET", "HEAD"])
